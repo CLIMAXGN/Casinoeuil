@@ -2,4 +2,17 @@
 
 # The ONLY casino where you can't lose money
 
-Made by Teamcipo and KAYOZZ
+# Jeux Dispo:
+
+<img width="665" height="113" alt="image" src="https://github.com/user-attachments/assets/5e8038c3-76ec-4d77-b6f3-1c1eec3bd880" />
+
+<img width="665" height="113" alt="image" src="https://github.com/user-attachments/assets/7b155565-cee2-4cbb-bff8-fc6804ed6395" />
+
+<img width="665" height="113" alt="image" src="https://github.com/user-attachments/assets/5880931b-1faf-4b58-b374-122925c2d932" />
+
+
+
+
+
+### 👥 Credits  
+**Made by TeamCipo & KAYOZZ**
