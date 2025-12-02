@@ -32,6 +32,10 @@
   <img src="https://github.com/user-attachments/assets/5880931b-1faf-4b58-b374-122925c2d932" width="70%" />
 </p>
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/e5c6692e-15e3-4d4e-8a13-759c310b46f6" width="70%" />
+</p>
+
 ## 👥 Credits
 
 <p align="center">
