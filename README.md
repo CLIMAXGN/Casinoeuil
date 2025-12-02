@@ -49,7 +49,6 @@ It's **a playground where probability bends to your will**.
 
 <p align="center">
   <strong>Made by TeamCipo & KAYOZZ</strong><br>
-  Bringing chaos, luck and style into a single explosive casino experience.<br>
   <strong>Trust Us with your Entertainement!</strong>
 </p>
 
