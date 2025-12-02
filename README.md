@@ -32,24 +32,11 @@
   <img src="https://github.com/user-attachments/assets/5880931b-1faf-4b58-b374-122925c2d932" width="70%" />
 </p>
 
----
-
-## 🃏 Why This Casino?
-
-> ### 💰 **Losing is not part of the algorithm.**
-> ### ⚡ **Every game is calibrated to make you win.**
-> ### 🎲 **Instant rewards. Infinite fun. Zero frustration.**
-
-This isn't just a casino.  
-It's **a playground where probability bends to your will**.
-
----
-
 ## 👥 Credits
 
 <p align="center">
   <strong>Made by TeamCipo & KAYOZZ</strong><br>
-  <strong>Trust Us with your Entertainement!</strong>
+  <strong>Trust us with your Entertainement!</strong>
 </p>
 
 ---
