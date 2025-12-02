@@ -5,7 +5,7 @@
 <h1 align="center">― The ONLY casino where you can't lose money ―</h1>
 
 <p align="center">
-  <strong>Welcome to the most unfair casino ever created — because the odds are ALWAYS on your side.</strong>
+  <strong>Welcome to the most unfair casino ever created — because the odds are ALWAYS on your side. (Trust us)</strong>
 </p>
 
 ---
