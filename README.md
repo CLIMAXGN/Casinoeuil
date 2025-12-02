@@ -5,7 +5,7 @@
 <h1 align="center">― The ONLY casino where you can't lose money ―</h1>
 
 <p align="center">
-  <strong>Welcome to the most unfair casino ever created — because the odds are ALWAYS on your side. (Trust us)</strong>
+  <strong>Welcome to the most unfair casino ever created — because the odds are ALWAYS on your side.</strong>
 </p>
 
 ---
@@ -50,6 +50,7 @@ It's **a playground where probability bends to your will**.
 <p align="center">
   <strong>Made by TeamCipo & KAYOZZ</strong><br>
   Bringing chaos, luck and style into a single explosive casino experience.
+  <strong>Trust Us with your Entertainement!</strong><br>
 </p>
 
 ---
