@@ -12,7 +12,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Edition-CLIMAX-orange?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Edition-CLIMAX-red?style=for-the-badge" />
   <img src="https://img.shields.io/badge/Engine-Python-blue?style=for-the-badge" />
 </p>
 
