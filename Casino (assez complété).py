@@ -180,3 +180,4 @@ class Casino:
             elif c == "quitter":
                 break #sortir
 
+
