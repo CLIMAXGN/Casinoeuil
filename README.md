@@ -37,7 +37,7 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/e6e8a0cb-283e-488f-895b-239481e9db26" width="60%" />
+  <img src="https://github.com/user-attachments/assets/e6e8a0cb-283e-488f-895b-239481e9db26" width="50%" />
 </p>
 
 
