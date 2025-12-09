@@ -21,7 +21,7 @@
 ## 🎮 Available Games
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/5e8038c3-76ec-4d77-b6f3-1c1eec3bd880" width="70%" />
+  <img src="https://github.com/user-attachments/assets/5e8038c3-76ec-4d77-b6f3-1c1eec3bd880" width="65%" />
 </p>
 
 <p align="center">
@@ -29,7 +29,7 @@
 </p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/5880931b-1faf-4b58-b374-122925c2d932" width="70%" />
+  <img src="https://github.com/user-attachments/assets/5880931b-1faf-4b58-b374-122925c2d932" width="80%" />
 </p>
 
 <p align="center">
