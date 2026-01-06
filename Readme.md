@@ -221,7 +221,7 @@ http://localhost:5000
 ### Slot Machine
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/5880931b-1faf-4b58-b374-122925c2d932" width="50%" />
+  <img src="https://github.com/user-attachments/assets/5880931b-1faf-4b58-b374-122925c2d932" width="70%" />
 </p>
 
 **Table des Gains (3 symboles identiques) :**
