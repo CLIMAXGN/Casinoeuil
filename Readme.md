@@ -149,7 +149,7 @@ http://localhost:5000
 ### Money Clicker
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/e6e8a0cb-283e-488f-895b-239481e9db26" width="65%" />
+  <img src="https://github.com/user-attachments/assets/e6e8a0cb-283e-488f-895b-239481e9db26" width="60%" />
 </p>
 
 **Comment jouer:**
@@ -162,7 +162,7 @@ http://localhost:5000
 ### Blackjack
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/7b155565-cee2-4cbb-bff8-fc6804ed6395" width="70%" />
+  <img src="https://github.com/user-attachments/assets/7b155565-cee2-4cbb-bff8-fc6804ed6395" width="60%" />
 </p>
 
 **Règles :**
@@ -182,7 +182,7 @@ http://localhost:5000
 ### Roulette
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/5e8038c3-76ec-4d77-b6f3-1c1eec3bd880" width="80%" />
+  <img src="https://github.com/user-attachments/assets/5e8038c3-76ec-4d77-b6f3-1c1eec3bd880" width="60%" />
 </p>
 
 **Modes de jeu :**
@@ -202,7 +202,7 @@ http://localhost:5000
 ### MineBomb
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/e5c6692e-15e3-4d4e-8a13-759c310b46f6" width="70%" />
+  <img src="https://github.com/user-attachments/assets/e5c6692e-15e3-4d4e-8a13-759c310b46f6" width="60%" />
 </p>
 
 **Principe :**
@@ -221,7 +221,7 @@ http://localhost:5000
 ### Slot Machine
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/5880931b-1faf-4b58-b374-122925c2d932" width="70%" />
+  <img src="https://github.com/user-attachments/assets/5880931b-1faf-4b58-b374-122925c2d932" width="60%" />
 </p>
 
 **Table des Gains (3 symboles identiques) :**
