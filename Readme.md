@@ -5,7 +5,7 @@
 <h1 align="center">Le SEUL casino dans lequel vous ne pouvez pas perdre d'argent.</h1>
 
 <p align="center">
-  <strong>Bienvenue dans le CASINOEUIL.</strong>
+  <strong>BIENVENUE DANS LE CASINOEUIL.</strong>
 </p>
 
 ---
