@@ -1008,6 +1008,10 @@ def process_queue():
     next_game = game_manager.pending_games.dequeue()
     return jsonify({'game_started': next_game, 'remaining': game_manager.pending_games.size()})
 
+@app.route('/health')
+def health():
+return {'status': 'ok'}, 200
+
 init_db()
 
 if __name__ == '__main__':
