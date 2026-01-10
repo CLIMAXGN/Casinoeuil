@@ -147,37 +147,6 @@ user_achievements = db.Table('user_achievements',
     db.Column('unlocked_at', db.DateTime, default=datetime.utcnow)
 )
 
-
-class GlobalStats(db.Model):
-    """Statistiques globales (tous joueurs confondus)"""
-    __tablename__ = 'global_stats'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    stat_key = db.Column(db.String(50), unique=True, nullable=False)
-    stat_value = db.Column(db.Integer, default=0)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    @staticmethod
-    def increment(key, value=1):
-        """Incrémente une stat globale"""
-        stat = GlobalStats.query.filter_by(stat_key=key).first()
-        if not stat:
-            stat = GlobalStats(stat_key=key, stat_value=value)
-            db.session.add(stat)
-        else:
-            stat.stat_value += value
-        db.session.commit()
-    
-    @staticmethod
-    def get_value(key, default=0):
-        """Récupère une stat globale"""
-        stat = GlobalStats.query.filter_by(stat_key=key).first()
-        return stat.stat_value if stat else default
-    
-    def __repr__(self):
-        return f'<GlobalStats {self.stat_key}={self.stat_value}>'
-
-
 # ============================================
 # PROGRAMMATION ORIENTÉE OBJET + STRUCTURES DE DONNÉES
 # ============================================
@@ -264,11 +233,12 @@ class ActionStack:
 class GameManager:
     """
     Classe de gestion des jeux (POO)
-    Utilise les structures PILE et FILE
+    Utilise la structure PILE (ActionStack) pour l'historique
     """
     def __init__(self):
-        self.action_history = ActionStack()
-        self.active_games = {}
+        self.action_history = ActionStack()  # PILE pour l'historique
+        self.active_games = {}               # Dictionnaire des parties actives
+        # SUPPRIMÉ : self.pending_games = GameQueue()
         
     def start_game(self, user_id, game_type, bet):
         """Démarre une nouvelle partie"""
@@ -282,7 +252,7 @@ class GameManager:
         action = GameAction('start', details={'game_type': game_type, 'bet': bet})
         self.action_history.push(action)
         
-        # Activer immédiatement (ou mettre en file selon la logique)
+        # Activer immédiatement
         self.active_games[user_id] = game_data
         
         return game_data

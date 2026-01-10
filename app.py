@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 import random
 import os
 import json
@@ -11,11 +11,11 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-very-secret-202
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///casinoeuil.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Importer db et les modèles APRÈS avoir configuré l'app
-from models import db, User, ClickerData, GameHistory, Achievement, GlobalStats, GameManager
+from models import db, User, ClickerData, GameHistory, Achievement, GameManager
 
-# Instance globale du gestionnaire (POO + PILE + FILE)
+# Instance globale du gestionnaire (POO + PILE)
 game_manager = GameManager()
+
 # Initialisation
 db.init_app(app)
 login_manager = LoginManager()
@@ -153,31 +153,6 @@ def admin_delete_user(user_id):
     
     return jsonify({'success': True, 'message': f'Utilisateur {username} supprimé'})
 
-@app.route('/admin/user/edit/<int:user_id>', methods=['POST'])
-@login_required
-def admin_edit_user(user_id):
-    if current_user.username != 'archibogue88':
-        return jsonify({'error': 'Accès refusé'}), 403
-    
-    data = request.json
-    new_money = data.get('money')
-    
-    if new_money is None or new_money < 0:
-        return jsonify({'error': 'Montant invalide'}), 400
-    
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'Utilisateur non trouvé'}), 404
-    
-    user.money = int(new_money)
-    db.session.commit()
-    
-    return jsonify({
-        'success': True, 
-        'message': f'Argent de {user.username} modifié à {new_money}$',
-        'new_money': user.money
-    })
-
 @app.route('/admin/user/add_money/<int:user_id>', methods=['POST'])
 @login_required
 def admin_add_money(user_id):
@@ -202,103 +177,6 @@ def admin_add_money(user_id):
         'message': f'{amount}$ ajoutés à {user.username}',
         'new_money': user.money
     })
-
-@app.route('/admin/user/reset_clicker/<int:user_id>', methods=['POST'])
-@login_required
-def admin_reset_user_clicker(user_id):
-    if current_user.username != 'archibogue88':
-        return jsonify({'error': 'Accès refusé'}), 403
-    
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'Utilisateur non trouvé'}), 404
-    
-    clicker = user.clicker_data
-    if clicker:
-        clicker.click_power = 1
-        clicker.click_level = 1
-        clicker.auto_level = 0
-        clicker.factory_level = 0
-        clicker.bank_level = 0
-        clicker.click_cost = 25
-        clicker.auto_cost = 150
-        clicker.factory_cost = 800
-        clicker.bank_cost = 5000
-        db.session.commit()
-    
-    return jsonify({
-        'success': True, 
-        'message': f'Clicker de {user.username} réinitialisé'
-    })
-
-@app.route('/admin/reset_all', methods=['POST'])
-@login_required
-def admin_reset_all():
-    if current_user.username != 'archibogue88':
-        return jsonify({'error': 'Accès refusé'}), 403
-    
-    data = request.json
-    confirmation = data.get('confirmation', '')
-    
-    if confirmation != 'RESET_EVERYTHING':
-        return jsonify({'error': 'Confirmation requise'}), 400
-    
-    User.query.filter(User.username != 'archibogue88').delete()
-    GameHistory.query.delete()
-    
-    db.session.commit()
-    
-    return jsonify({
-        'success': True, 
-        'message': 'Base de données réinitialisée (admin préservé)'
-    })
-
-@app.route('/admin/ban_user/<int:user_id>', methods=['POST'])
-@login_required
-def admin_ban_user(user_id):
-    if current_user.username != 'archibogue88':
-        return jsonify({'error': 'Accès refusé'}), 403
-    
-    if user_id == current_user.id:
-        return jsonify({'error': 'Tu ne peux pas te bannir toi-même !'}), 400
-    
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'Utilisateur non trouvé'}), 404
-    
-    user.money = 0
-    
-    if user.clicker_data:
-        db.session.delete(user.clicker_data)
-    
-    GameHistory.query.filter_by(user_id=user_id).delete()
-    
-    db.session.commit()
-    
-    return jsonify({
-        'success': True, 
-        'message': f'{user.username} a été banni (argent à 0, données effacées)'
-    })
-
-@app.route('/admin/export_users')
-@login_required
-def admin_export_users():
-    if current_user.username != 'archibogue88':
-        return "Accès refusé", 403
-    
-    all_users = User.query.all()
-    
-    users_export = []
-    for user in all_users:
-        users_export.append({
-            'username': user.username,
-            'email': user.email,
-            'money': user.money,
-            'created_at': user.created_at.isoformat(),
-        })
-    
-    return jsonify(users_export)
-
 # ============================================
 # STATISTIQUES ET LEADERBOARD (CORRIGÉ)
 # ============================================
@@ -315,6 +193,29 @@ def get_stats():
 def user_stats():
     """Statistiques personnelles du joueur"""
     return jsonify(current_user.get_stats())
+
+@app.route('/api/user_achievements')
+@login_required
+def user_achievements():
+    """Récupère les achievements du joueur"""
+    # Tous les achievements disponibles
+    all_achievements = Achievement.query.all()
+    
+    # Achievements débloqués par l'utilisateur
+    unlocked_ids = [ach.id for ach in current_user.achievements]
+    
+    achievements_data = []
+    for ach in all_achievements:
+        achievements_data.append({
+            'id': ach.id,
+            'name': ach.name,
+            'description': ach.description,
+            'icon': ach.icon,
+            'reward': ach.reward,
+            'unlocked': ach.id in unlocked_ids
+        })
+    
+    return jsonify(achievements_data)
 
 # CORRECTION DU LEADERBOARD - Route manquante !
 @app.route('/api/leaderboard')
@@ -380,6 +281,58 @@ def get_global_stats():
         'minebomb': get_game_stats('minebomb'),
         'slots': get_game_stats('slots')
     }
+
+def check_and_unlock_achievements(user):
+    """Vérifie et débloque les achievements du joueur"""
+    stats = user.get_stats()
+    unlocked_ids = [ach.id for ach in user.achievements]
+    newly_unlocked = []
+    
+    # Premier pas - Jouer sa première partie
+    ach1 = Achievement.query.filter_by(name='Premier pas').first()
+    if ach1 and ach1.id not in unlocked_ids and stats['total_games'] >= 1:
+        user.achievements.append(ach1)
+        user.add_money(ach1.reward)
+        newly_unlocked.append({'name': ach1.name, 'reward': ach1.reward})
+    
+    # Gagnant - Gagner 10 parties
+    ach2 = Achievement.query.filter_by(name='Gagnant').first()
+    if ach2 and ach2.id not in unlocked_ids and stats['total_wins'] >= 10:
+        user.achievements.append(ach2)
+        user.add_money(ach2.reward)
+        newly_unlocked.append({'name': ach2.name, 'reward': ach2.reward})
+    
+    # Millionnaire - Atteindre 10,000$
+    ach3 = Achievement.query.filter_by(name='Millionnaire').first()
+    if ach3 and ach3.id not in unlocked_ids and user.money >= 10000:
+        user.achievements.append(ach3)
+        user.add_money(ach3.reward)
+        newly_unlocked.append({'name': ach3.name, 'reward': ach3.reward})
+    
+    # Série de victoires - 5 victoires d'affilée (vérifie les 5 dernières parties)
+    recent_games = GameHistory.query.filter_by(user_id=user.id)\
+        .order_by(GameHistory.played_at.desc()).limit(5).all()
+    if len(recent_games) == 5 and all(g.result == 'win' for g in recent_games):
+        ach4 = Achievement.query.filter_by(name='Série de victoires').first()
+        if ach4 and ach4.id not in unlocked_ids:
+            user.achievements.append(ach4)
+            user.add_money(ach4.reward)
+            newly_unlocked.append({'name': ach4.name, 'reward': ach4.reward})
+    
+    # Chanceux - Gagner avec multiplicateur x50+
+    big_win = GameHistory.query.filter_by(user_id=user.id)\
+        .filter(GameHistory.multiplier >= 50).first()
+    if big_win:
+        ach5 = Achievement.query.filter_by(name='Chanceux').first()
+        if ach5 and ach5.id not in unlocked_ids:
+            user.achievements.append(ach5)
+            user.add_money(ach5.reward)
+            newly_unlocked.append({'name': ach5.name, 'reward': ach5.reward})
+    
+    if newly_unlocked:
+        db.session.commit()
+    
+    return newly_unlocked
 
 # ============================================
 # MONEY CLICKER
@@ -502,7 +455,6 @@ def clicker_passive():
 # ============================================
 # BLACKJACK
 # ============================================
-
 def create_deck():
     """Crée un jeu de 52 cartes"""
     suits = ['♥', '♦', '♣', '♠']
@@ -532,33 +484,34 @@ def hand_total(hand):
 @app.route('/api/blackjack/start', methods=['POST'])
 @login_required
 def blackjack_start():
-    """Démarre une partie de blackjack"""
+    """Démarre une partie de Blackjack"""
     data = request.json
     bet = int(data.get('bet', 50))
     
+    # Validations
     if bet < 10:
         return jsonify({'error': 'Mise minimum : 10$'}), 400
     
     if bet > current_user.money:
         return jsonify({'error': 'Mise trop élevée'}), 400
     
+    # Retirer l'argent
     current_user.remove_money(bet)
     
-    # Créer le deck (entre 1 et 8 decks)
+    # Créer 1-8 decks de cartes (comme dans les vrais casinos)
     num_decks = random.randint(1, 8)
     deck = create_deck() * num_decks
     random.shuffle(deck)
     
-    # Distribuer les cartes
+    # Distribuer 2 cartes au joueur et au croupier
     player_hand = [deck.pop(), deck.pop()]
     dealer_hand = [deck.pop(), deck.pop()]
     
-    game_manager.clear_history()
-    game_manager.record_action('start', total=hand_total(player_hand), details={'bet': bet})
-    for card in player_hand:
-        game_manager.record_action('deal_player', card=card, total=hand_total(player_hand))
-
-    # Sauvegarder dans la session
+    # Calculer les totaux
+    player_total = hand_total(player_hand)
+    dealer_total = hand_total(dealer_hand)
+    
+    # Stocker la partie en session
     session['blackjack'] = {
         'bet': bet,
         'deck': deck,
@@ -567,30 +520,43 @@ def blackjack_start():
         'num_decks': num_decks
     }
     
+    # ENREGISTRER DANS LA PILE (POO)
+    game_manager.start_game(current_user.id, 'blackjack', bet)
+    game_manager.record_action('start', details={'bet': bet, 'num_decks': num_decks})
+    game_manager.record_action('deal_player', card=player_hand[0], total=card_value(player_hand[0]))
+    game_manager.record_action('deal_player', card=player_hand[1], total=player_total)
+    game_manager.record_action('deal_dealer', card=dealer_hand[0], total=card_value(dealer_hand[0]))
+    
     return jsonify({
         'money': current_user.money,
         'player_hand': player_hand,
         'dealer_hand': dealer_hand,
-        'player_total': hand_total(player_hand),
+        'player_total': player_total,
+        'dealer_total': dealer_total,
         'num_decks': num_decks
     })
 
 @app.route('/api/blackjack/hit', methods=['POST'])
 @login_required
 def blackjack_hit():
-    """Tirer une carte"""
+    """Tire une carte supplémentaire"""
     game = session.get('blackjack')
     if not game:
         return jsonify({'error': 'Pas de partie en cours'}), 400
     
+    # Tirer une carte
     card = game['deck'].pop()
     game['player_hand'].append(card)
+    player_total = hand_total(game['player_hand'])
+    
+    # Mettre à jour la session
     session['blackjack'] = game
     
-    player_total = hand_total(game['player_hand'])
-    busted = player_total > 21
-
+    # ENREGISTRER DANS LA PILE
     game_manager.record_action('hit', card=card, total=player_total)
+    
+    # Vérifier si bust
+    busted = player_total > 21
     
     return jsonify({
         'player_hand': game['player_hand'],
@@ -606,9 +572,16 @@ def blackjack_stand():
     if not game:
         return jsonify({'error': 'Pas de partie en cours'}), 400
     
+    # ENREGISTRER L'ACTION STAND DANS LA PILE
+    player_total = hand_total(game['player_hand'])
+    game_manager.record_action('stand', total=player_total)
+    
     # Dealer tire jusqu'à 17
     while hand_total(game['dealer_hand']) < 17:
-        game['dealer_hand'].append(game['deck'].pop())
+        card = game['deck'].pop()
+        game['dealer_hand'].append(card)
+        # ENREGISTRER CHAQUE CARTE DU DEALER
+        game_manager.record_action('dealer_hit', card=card, total=hand_total(game['dealer_hand']))
     
     player_total = hand_total(game['player_hand'])
     dealer_total = hand_total(game['dealer_hand'])
@@ -618,15 +591,19 @@ def blackjack_stand():
     if player_total > 21:
         result = 'lose'
         profit = -bet
+        result_message = 'Vous avez perdu ! (Bust)'
     elif dealer_total > 21 or player_total > dealer_total:
         result = 'win'
         profit = bet
+        result_message = 'Vous avez gagné !'
     elif player_total < dealer_total:
         result = 'lose'
         profit = -bet
+        result_message = 'Vous avez perdu !'
     else:
         result = 'draw'
         profit = 0
+        result_message = 'Égalité !'
     
     # Mettre à jour l'argent
     if result == 'win':
@@ -634,7 +611,7 @@ def blackjack_stand():
     elif result == 'draw':
         current_user.add_money(bet)
     
-    # Sauvegarder l'historique
+    # Sauvegarder l'historique dans la DB
     history = GameHistory(
         user_id=current_user.id,
         game_type='blackjack',
@@ -647,15 +624,24 @@ def blackjack_stand():
     db.session.add(history)
     db.session.commit()
     
+    # TERMINER LA PARTIE DANS LE GAME MANAGER
+    game_manager.end_game(current_user.id)
+    
+    # Nettoyer la session
     session.pop('blackjack', None)
+
+    new_achievements = check_and_unlock_achievements(current_user)
     
     return jsonify({
         'result': result,
+        'result_message': result_message,
         'profit': profit,
         'money': current_user.money,
         'dealer_hand': game['dealer_hand'],
         'dealer_total': dealer_total,
-        'stats': get_global_stats()
+        'player_total': player_total,
+        'stats': get_global_stats(),
+        'new_achievements': new_achievements
     })
 
 # ============================================
@@ -685,11 +671,11 @@ def roulette_spin():
     # Déterminer la couleur
     red_numbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]
     if number == 0:
-        color = 'Green'
+        color = 'Green' 
     elif number in red_numbers:
-        color = 'Red'
+        color = 'Red'  
     else:
-        color = 'Black'
+        color = 'Black'  
     
     # Déterminer le résultat
     if mode == 'color':
@@ -697,7 +683,7 @@ def roulette_spin():
         multiplier = 2 if won else 0
     else:
         won = (int(choice) == number)
-        multiplier = 35 if won else 0
+        multiplier = 36 if won else 0
     
     result = 'win' if won else 'lose'
     profit = (bet * multiplier) - bet if won else -bet
@@ -717,6 +703,8 @@ def roulette_spin():
     )
     db.session.add(history)
     db.session.commit()
+
+    new_achievements = check_and_unlock_achievements(current_user)
     
     return jsonify({
         'result': result,
@@ -724,9 +712,9 @@ def roulette_spin():
         'color': color,
         'profit': profit,
         'money': current_user.money,
-        'stats': get_global_stats()
+        'stats': get_global_stats(),
+        'new_achievements': new_achievements
     })
-
 # ============================================
 # MINEBOMB
 # ============================================
@@ -826,7 +814,9 @@ def minebomb_cashout():
     """Encaisser les gains"""
     game = session.get('minebomb')
     if not game:
-        return jsonify({'error': 'Pas de partie en cours'}), 400
+        return jsonify({
+            'error': 'Pas de partie en cours. La session a peut-être expiré. Veuillez recommencer.'
+        }), 400
     
     diamonds = game['diamonds_found']
     multiplier = 1 + (diamonds * 0.3 * (game['bombs'] / 5))
@@ -849,15 +839,18 @@ def minebomb_cashout():
     
     session.pop('minebomb', None)
     
+    new_achievements = check_and_unlock_achievements(current_user)
+
     return jsonify({
         'profit': profit,
         'multiplier': multiplier,
         'money': current_user.money,
-        'stats': get_global_stats()
+        'stats': get_global_stats(),
+        'new_achievements': new_achievements
     })
 
 # ============================================
-# SLOTS
+# SLOTS - Correction français
 # ============================================
 
 @app.route('/api/slots/spin', methods=['POST'])
@@ -916,6 +909,8 @@ def slots_spin():
     )
     db.session.add(history)
     db.session.commit()
+
+    new_achievements = check_and_unlock_achievements(current_user)
     
     return jsonify({
         'result': result,
@@ -923,7 +918,8 @@ def slots_spin():
         'multiplier': multiplier,
         'profit': profit,
         'money': current_user.money,
-        'stats': get_global_stats()
+        'stats': get_global_stats(),
+        'new_achievements': new_achievements
     })
 
 # ============================================

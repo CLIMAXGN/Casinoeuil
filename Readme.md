@@ -59,7 +59,7 @@ Application web de casino complète construite avec **Flask** (backend Python) e
 - Panel Admin pour gestion des utilisateurs
 - Base de Données SQLite avec relations complexes
 - Interface Responsive avec animations fluides
-- Architecture POO avec structures de données (PILE/FILE)
+- Architecture POO avec structures de données (PILE)
 - Sécurité avec hachage de mots de passe
 
 ---
@@ -71,6 +71,10 @@ Avant d'exécuter ce projet, assurez-vous d'avoir installé :
 | Logiciel | Version Minimale | Description |
 |----------|------------------|-------------|
 | **Python** | 3.7+ | Langage de programmation principal |
+| **Flask** | 3.0.0+ | Framework web |
+| **Flask-SQLAlchemy** | 3.1.1+ | ORM pour base de données |
+| **Flask-Login** | 0.6.3+ | Gestion des sessions utilisateur |
+| **Werkzeug** | 3.0.1+ | Hashage sécurisé des mots de passe |
 | **pip** | Dernière version | Gestionnaire de paquets Python |
 | **SQLite** | 3.x | Inclus avec Python |
 | **Navigateur Web** | Version récente | Chrome, Firefox, Safari ou Edge |
@@ -211,7 +215,7 @@ http://localhost:5000
 **Règles :**
 
 - **But :** Se rapprocher de 21 sans dépasser
-- **Multi-decks :** 4 à 8 jeux de cartes (aléatoire)
+- **Multi-decks :** 1 à 8 jeux de cartes (aléatoire)
 - **Paiement :** 2x votre mise en cas de victoire
 - **Mise minimale :** 10$
 
@@ -259,7 +263,7 @@ http://localhost:5000
 
 - **Peu de bombes** = Gains faibles mais sûrs
 - **Beaucoup de bombes** = Multiplicateur élevé mais risqué
-- Formule : `Multiplicateur de base = 0.2 + (bombes × 0.05)`
+- Formule : `Multiplicateur = 1 + (diamants trouvés × 0.3 × bombes/5)`
 
 ### Slot Machine
 
@@ -273,7 +277,7 @@ http://localhost:5000
 |---------|----------|--------|
 | 💎 **Diamant** | 100x | Ultra Rare |
 | 7️⃣ **Sept** | 50x | Très Rare |
-| 🎰 **Pastèque** | 20x | Rare |
+| 🎰 **Casino** | 20x | Rare |
 | 🍋 **Citron** | 15x | Peu Commun |
 | 🍊 **Orange** | 12x | Commun |
 | 🍇 **Raisin** | 10x | Très Commun |
@@ -309,7 +313,7 @@ Casinoeuil/
 | Fichier | Lignes | Responsabilité |
 |---------|--------|----------------|
 | `app.py` | ~1000 | Logique serveur, API REST, gestion sessions |
-| `models.py` | ~400 | Modèles DB (User, ClickerData, GameHistory), POO, structures PILE/FILE |
+| `models.py` | ~400 | Modèles DB (User, ClickerData, GameHistory), POO, structures PILE |
 | `script.js` | ~700 | Interactions client, appels asynchrones |
 | `styles.css` | ~900 | Design responsive, animations, thème |
 | `index.html` | ~400 | Structure HTML, interfaces jeux |
@@ -452,9 +456,11 @@ passive_income = (auto_level × 0.5) + (factory_level × 2) + (bank_level × 8)
 
 ---
 
-### Programmation Orientée Objet (POO)/ PILE, FILE:
+### Programmation Orientée Objet (POO) & Structure PILE
 
-Classe ```GameAction``` représente une action de jeu individuelle :
+#### Classes POO Implémentées
+
+**Classe `GameAction`** - Représente une action de jeu individuelle :
 ```python
 action = GameAction(
     action_type='hit',
@@ -464,12 +470,21 @@ action = GameAction(
 )
 ```
 
-Classe ```ActionStack```, structure de données pour l'historique des actions :
+**Classe `ActionStack`** - Structure de données PILE (LIFO) pour l'historique :
 ```python
 stack = ActionStack()
-stack.push(action1)  # Empiler
-stack.push(action2)
-last = stack.pop()   # Dépiler (retourne action2)
+stack.push(action1)  # Empiler une action
+stack.push(action2)  # Empiler une autre action
+last = stack.pop()   # Dépiler (retourne action2 - LIFO)
+peek = stack.peek()  # Voir le sommet sans dépiler
+```
+
+**Classe `GameManager`** - Gestionnaire principal utilisant la PILE :
+```python
+manager = GameManager()
+manager.record_action('hit', card={'suit': '♥', 'value': 'K'}, total=20)
+manager.record_action('stand')
+history = manager.get_action_history()  # Récupère toute la PILE
 ```
 
 ---

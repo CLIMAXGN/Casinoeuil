@@ -374,30 +374,35 @@
         }
 
         // Charger les achievements (exemple statique pour le moment)
-        function loadAchievements() {
-            const achievementsGrid = document.getElementById('achievementsGrid');
-            
-            const achievements = [
-                { name: 'Premier pas', description: 'Jouer votre première partie', icon: '🎮', unlocked: true, reward: 100 },
-                { name: 'Gagnant', description: 'Gagner 10 parties', icon: '🏆', unlocked: false, reward: 500 },
-                { name: 'Chanceux', description: 'Gagner avec un multiplicateur x50+', icon: '🍀', unlocked: false, reward: 1000 },
-                { name: 'Millionnaire', description: 'Atteindre 10,000$', icon: '💰', unlocked: false, reward: 2000 },
-                { name: 'Série de victoires', description: 'Gagner 5 parties d\'affilée', icon: '🔥', unlocked: false, reward: 1500 },
-                { name: 'Explorateur', description: 'Jouer à tous les jeux', icon: '🌟', unlocked: false, reward: 750 },
-            ];
-
-            achievementsGrid.innerHTML = achievements.map(ach => `
-                <div class="achievement-card ${ach.unlocked ? 'unlocked' : 'locked'}">
-                    <div class="achievement-icon">${ach.icon}</div>
-                    <div class="achievement-info">
-                        <h3>${ach.name}</h3>
-                        <p>${ach.description}</p>
-                        ${ach.unlocked ? '<div class="achievement-reward">✅ Débloqué</div>' : 
-                                        `<div class="achievement-reward">🎁 Récompense: ${ach.reward}$</div>`}
-                    </div>
-                </div>
-            `).join('');
+        async function loadAchievements() {
+    try {
+        const response = await fetch('/api/user_achievements');
+        const achievements = await response.json();
+        
+        const achievementsGrid = document.getElementById('achievementsGrid');
+        
+        if (achievements.length === 0) {
+            achievementsGrid.innerHTML = '<div class="no-data">Aucun achievement disponible</div>';
+            return;
         }
+
+        achievementsGrid.innerHTML = achievements.map(ach => `
+            <div class="achievement-card ${ach.unlocked ? 'unlocked' : 'locked'}">
+                <div class="achievement-icon">${ach.icon}</div>
+                <div class="achievement-info">
+                    <h3>${ach.name}</h3>
+                    <p>${ach.description}</p>
+                    ${ach.unlocked ? '<div class="achievement-reward">✅ Débloqué</div>' : 
+                                    `<div class="achievement-reward">🎁 Récompense: ${ach.reward}$</div>`}
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Erreur chargement achievements:', error);
+        document.getElementById('achievementsGrid').innerHTML = 
+            '<div class="no-data">Erreur de chargement</div>';
+    }
+}
 
         // Charger toutes les données au chargement de la page
         document.addEventListener('DOMContentLoaded', () => {

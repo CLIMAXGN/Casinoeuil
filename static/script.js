@@ -10,10 +10,10 @@ let factoryLevel = 0;
 let bankLevel = 0;
 let passiveIncome = 0;
 
-let clickCost = 10;
-let autoCost = 50;
-let factoryCost = 200;
-let bankCost = 1000;
+let clickCost = 25;
+let autoCost = 150;
+let factoryCost = 800;
+let bankCost = 5000;
 
 // ============================================
 // INITIALISATION
@@ -355,7 +355,7 @@ async function startBlackjack() {
         // Update deck info
         const totalCards = data.num_decks * 52;
         document.getElementById('deckInfo').innerHTML = `
-            🎴 Playing with <strong>${data.num_decks} decks</strong> (${totalCards} cards total)
+            Cette partie utilise <strong>${data.num_decks} paquet${data.num_decks > 1 ? 's' : ''} de cartes</strong> (${totalCards} cartes)
         `;
         
         displayHand('player', data.player_hand, data.player_total);
@@ -407,13 +407,13 @@ async function stand() {
         
         if (data.result === 'win') {
             msgDiv.classList.add('win');
-            msgDiv.innerHTML = `✅ You WIN!<br>You won ${data.profit} $`;
+            msgDiv.innerHTML = `✅ Vous avez gagné !<br>Vous gagnez ${data.profit} $`;
         } else if (data.result === 'lose') {
             msgDiv.classList.add('lose');
-            msgDiv.innerHTML = `❌ You LOSE!`;
+            msgDiv.innerHTML = `❌ Vous avez perdu!`;
         } else {
             msgDiv.classList.add('info');
-            msgDiv.innerHTML = `🤝 DRAW! Your bet has been returned.`;
+            msgDiv.innerHTML = `🤝 ÉGALITÉ ! Votre mise vous a été retournée.`;
         }
         
         updateMoneyDisplay(data.money);
@@ -487,7 +487,7 @@ async function spinRoulette() {
     let choice;
     if (mode === 'color') {
         if (!selectedColor) {
-            alert('Please select a color!');
+            alert('Veuillez sélectionner une couleur!');
             return;
         }
         choice = selectedColor;
@@ -523,10 +523,10 @@ async function spinRoulette() {
             
             if (data.result === 'win') {
                 msgDiv.classList.add('win');
-                msgDiv.innerHTML = `✅ ${data.color} ${data.number}!<br>You win ${data.profit} $`;
+                msgDiv.innerHTML = `✅ ${data.color} ${data.number}!<br>Vous gagnez ${data.profit} $`;
             } else {
                 msgDiv.classList.add('lose');
-                msgDiv.innerHTML = `❌ ${data.color} ${data.number}<br>You lose ${bet} $`;
+                msgDiv.innerHTML = `❌ ${data.color} ${data.number}<br>Vous perdez ${bet} $`;
             }
             
             updateMoneyDisplay(data.money);
@@ -552,7 +552,7 @@ async function startMineBomb() {
     const bombs = parseInt(document.getElementById('mbBombs').value);
     
     if (bombs < 3 || bombs > 10) {
-        alert('Number of bombs must be between 3 and 10!');
+        alert('Le nombre de bombes doit être entre 3 et 10!');
         return;
     }
     
@@ -631,7 +631,7 @@ async function revealCell(index) {
             
             const msgDiv = document.getElementById('mbMessage');
             msgDiv.className = 'message lose';
-            msgDiv.innerHTML = '💥 BOOM! You lost';
+            msgDiv.innerHTML = '💥 BOUM! Vous avez perdu';
             
             updateMoneyDisplay(data.money);
             updateStatsDisplay(data.stats);
@@ -671,7 +671,7 @@ async function cashout() {
         
         const msgDiv = document.getElementById('mbMessage');
         msgDiv.className = 'message win';
-        msgDiv.innerHTML = `💰 CASHOUT!<br>You win ${data.profit} $ (x${data.multiplier})`;
+        msgDiv.innerHTML = `💰 CASHOUT!<br>Vous gagnez ${data.profit} $ (x${data.multiplier})`;
         
         document.querySelectorAll('.mine-cell').forEach(cell => {
             cell.onclick = null;
@@ -750,10 +750,10 @@ async function spinSlots() {
                 } else if (data.multiplier === 50) {
                     jackpotMsg = '🎉 JACKPOT! 🎉<br>';
                 }
-                msgDiv.innerHTML = `${jackpotMsg}✅ ${data.reels.join(' ')}!<br>You win ${data.profit} $ (x${data.multiplier})`;
+                msgDiv.innerHTML = `${jackpotMsg}✅ ${data.reels.join(' ')}!<br>Vous gagnez ${data.profit} $ (x${data.multiplier})`;
             } else {
                 msgDiv.classList.add('lose');
-                msgDiv.innerHTML = `❌ ${data.reels.join(' ')}<br>You lose ${bet} $`;
+                msgDiv.innerHTML = `❌ ${data.reels.join(' ')}<br>Vous perdez ${bet} $`;
             }
             
             updateMoneyDisplay(data.money);
