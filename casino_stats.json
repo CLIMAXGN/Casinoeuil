@@ -1,0 +1,34 @@
+{
+  "totalGames": 49,
+  "totalWins": 11,
+  "totalLosses": 37,
+  "biggestWin": 1000,
+  "biggestLoss": 1000,
+  "totalWagered": 4634,
+  "totalWinnings": 1570,
+  "totalResets": 0,
+  "blackjack": {
+    "games": 11,
+    "wins": 5,
+    "wagered": 550,
+    "won": 250
+  },
+  "roulette": {
+    "games": 7,
+    "wins": 3,
+    "wagered": 484,
+    "won": 120
+  },
+  "minebomb": {
+    "games": 11,
+    "wins": 0,
+    "wagered": 2600,
+    "won": 0
+  },
+  "slots": {
+    "games": 20,
+    "wins": 3,
+    "wagered": 1000,
+    "won": 1200
+  }
+}
