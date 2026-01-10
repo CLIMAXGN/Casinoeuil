@@ -390,9 +390,43 @@ Fonctionnalités :
 
 Le code inclut **des verifications** pour garantir l'intégrité des données et la logique correcte. (nous avons voulu en mettre un maximum pour nous assurer de la fiabilîté du code, et surtout d'assurer une experience utilisateur agréable)
 
-#### 1- **X**
+#### 1- **Gestion de l'Argent**
 ```python
-X
+# models.py - Classe User
+def add_money(self, amount):
+    if amount < 0:
+        raise ValueError("Le montant ne peut pas être négatif")
+    self.money += amount
+
+def remove_money(self, amount):
+    if amount < 0:
+        raise ValueError("Le montant ne peut pas être négatif")
+    if self.money < amount:
+        raise ValueError("Fonds insuffisants")
+    self.money -= amount
+```
+
+#### 2- **Validation des Mises**
+```python
+# Blackjack, Roulette, Slots
+if bet < 10:
+    return jsonify({'error': 'Mise minimum : 10$'}), 400
+if bet > current_user.money:
+    return jsonify({'error': 'Mise trop élevée'}), 400
+```
+
+#### 3- **Validation MineBomb**
+```python
+if bombs < 3 or bombs > 10:
+    return jsonify({'error': 'Entre 3 et 10 bombes'}), 400
+```
+
+#### 4- **Validation Inscription**
+```python
+if len(username) < 3:
+    return jsonify({'error': 'Min 3 caractères'}), 400
+if len(password) < 6:
+    return jsonify({'error': 'Min 6 caractères'}), 400
 ```
 
 
@@ -462,7 +496,7 @@ pip install flask
 
 **Solution :**
 
->  Ceci ne devrait JAMAIS arriver grâce aux assertions.
+>  Ceci ne devrait JAMAIS arriver grâce aux verifications.
 
 #### 5- Améliorations Ne Fonctionnent Pas
 
@@ -482,7 +516,7 @@ pip install flask
 
 <p align="center">
   <strong>Fait par TeamCipo & KAYOZZ</strong><br>
-  <strong>Trust us with your Entertainement!</strong>
+  <strong>Trust us with your Entertainment!</strong>
 </p>
 
 ---
