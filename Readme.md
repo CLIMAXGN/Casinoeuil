@@ -531,7 +531,7 @@ if len(password) < 6:
     return jsonify({'error': 'Min 6 caractères'}), 400
 ```
 
-**Total : 15+ validations critiques** garantissant l'intégrité et la sécurité de l'application.
+**Total : 15+ validations** garantissant l'intégrité et la sécurité de l'application.
 
 ---
 
