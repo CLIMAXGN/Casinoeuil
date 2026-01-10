@@ -37,11 +37,11 @@
 - [Base de Données](#base-de-données)
 - [Validations](#validations)
 - [Dépannage](#dépannage)
-  - [Port Déjà Utilisé](#port-déjà-utilisé)
-  - [Base de Données Corrompue](#base-de-données-corrompue)
-  - [Erreur Flask Non Trouvée](#erreur-flask-non-trouvée)
-  - [Argent Négatif](#argent-négatif)
-  - [Améliorations Ne Fonctionnent Pas](#améliorations-ne-fonctionnent-pas)
+  - [Port Déjà Utilisé](#1--port-déjà-utilisé)
+  - [Base de Données Corrompue](#2--base-de-données-corrompue)
+  - [Erreur Flask Non Trouvée](#3--erreur-flask-non-trouvée)
+  - [Argent Négatif](#4--argent-négatif)
+  - [Améliorations Ne Fonctionnent Pas](#5--améliorations-ne-fonctionnent-pas)
 
 ---
 
