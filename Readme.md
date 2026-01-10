@@ -21,7 +21,6 @@
 
 ## Table des Matières
 
-
 - [Description](#description)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
@@ -36,20 +35,13 @@
 - [Structure du Projet](#structure-du-projet)
   - [Fichiers Détaillés](#fichiers-détaillés)
 - [Base de Données](#base-de-données)
-- [Assertions & Tests](#assertions--tests)
-  - [Validation des Statistiques](#1-validation-des-statistiques)
-  - [Gestion de l'Argent](#2-gestion-de-largent)
-  - [Système Clicker](#3-système-clicker)
-  - [Blackjack](#4-blackjack)
-  - [Roulette](#5-roulette)
-  - [MineBomb](#6-minebomb)
-  - [Slot Machine](#7-slot-machine)
+- [Validations](#validations)
 - [Dépannage](#dépannage)
-  - [Port Déjà Utilisé](#1-port-déjà-utilisé)
-  - [Fichier de Statistiques Corrompu](#2-fichier-de-statistiques-corrompu)
-  - [Erreur Flask Non Trouvée](#3-erreur-flask-non-trouvée)
-  - [Argent Négatif](#4-argent-négatif)
-  - [Améliorations Ne Fonctionnent Pas](#5-améliorations-ne-fonctionnent-pas)
+  - [Port Déjà Utilisé](#1--port-déjà-utilisé)
+  - [Base de Données Corrompue](#2--base-de-données-corrompue)
+  - [Erreur Flask Non Trouvée](#3--erreur-flask-non-trouvée)
+  - [Argent Négatif](#4--argent-négatif)
+  - [Améliorations Ne Fonctionnent Pas](#5--améliorations-ne-fonctionnent-pas)
 
 ---
 
@@ -80,7 +72,7 @@ Avant d'exécuter ce projet, assurez-vous d'avoir installé :
 |----------|------------------|-------------|
 | **Python** | 3.7+ | Langage de programmation principal |
 | **pip** | Dernière version | Gestionnaire de paquets Python |
-|SQLite3 |.x |Inclus avec Python|
+| **SQLite** | 3.x | Inclus avec Python |
 | **Navigateur Web** | Version récente | Chrome, Firefox, Safari ou Edge |
 
 ---
@@ -92,7 +84,8 @@ Avant d'exécuter ce projet, assurez-vous d'avoir installé :
 git clone https://github.com/CLIMAXGN/Casinoeuil.git
 cd casinoeuil
 ```
-Étape 2 : Créer un Environnement Virtuel
+
+### Étape 2 : Créer un Environnement Virtuel
 ```bash
 python -m venv venv
 
@@ -162,7 +155,9 @@ http://localhost:5000
   Suivez vos statistiques et votre classement
 
 ---
+
 ### Fonctionnalités
+
 #### Pour les Joueurs
 
 - Inscription/Connexion sécurisée
@@ -183,6 +178,7 @@ http://localhost:5000
 - Statistiques globales (argent total, moyenne, etc.)
   
 ---
+
 ## Contrôles & Fonctionnement
 
 ### Menu Principal
@@ -323,40 +319,142 @@ Casinoeuil/
 
 ## Base de Données
 
-┌─────────────┐
-│    User     │ ← Utilisateur principal
-├─────────────┤
-│ id (PK)     │
-│ username    │──┐
-│ email       │  │
-│ password    │  │
-│ money       │  │
-│ created_at  │  │
-└─────────────┘  │
-                 │
-       ┌─────────┴────────────┬──────────────┐
-       │                      │              │
-       ▼                      ▼              ▼
-┌──────────────┐     ┌──────────────┐  ┌─────────────┐
-│ ClickerData  │     │ GameHistory  │  │ Achievement │
-├──────────────┤     ├──────────────┤  ├─────────────┤
-│ id (PK)      │     │ id (PK)      │  │ id (PK)     │
-│ user_id (FK) │     │ user_id (FK) │  │ name        │
-│ click_power  │     │ game_type    │  │ description │
-│ click_level  │     │ bet_amount   │  │ icon        │
-│ auto_level   │     │ result       │  │ reward      │
-│ ...          │     │ profit       │  └─────────────┘
-└──────────────┘     │ multiplier   │
-                     │ details      │
-                     │ played_at    │
-                     └──────────────┘
+### Architecture SQLite avec SQLAlchemy
 
-### Stockage en Session (Flask Session)
+Notre application utilise **SQLite** avec **SQLAlchemy** comme ORM. Voici les **6 tables principales** :
 
-**Programmation Orientée Objet (POO)/ PILE, FILE:**
+#### Tables Principales
+
+| Table | Description | Relations |
+|-------|-------------|-----------|
+| **User** | Utilisateurs de l'application | 1→1 ClickerData, 1→N GameHistory |
+| **ClickerData** | Données du Money Clicker | N→1 User |
+| **GameHistory** | Historique des parties | N→1 User |
+| **Achievement** | Succès débloquables | N↔N User |
+| **user_achievements** | Table d'association | Lie User et Achievement |
+| **GlobalStats** | Statistiques globales | Indépendante |
+
+---
+
+### Détails des Tables
+
+#### 1. **User** (Utilisateurs)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `id` | PK | Identifiant unique |
+| `username` | | Nom d'utilisateur |
+| `email` | | Email |
+| `password_hash` | | Mot de passe haché |
+| `money` | | Solde du joueur |
+| `created_at` | | Date de création |
+| `last_login` | | Dernière connexion |
+
+**Relations :**
+- Un User a **1 seul** ClickerData
+- Un User a **plusieurs** GameHistory
+- Un User peut débloquer **plusieurs** Achievements
+
+#### 2. **ClickerData** (Money Clicker)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `id` | PK | Identifiant unique |
+| `user_id` | FK | Propriétaire (→ User) |
+| `click_power` | | Gain par clic |
+| `click_level` | | Niveau amélioration |
+| `auto_level` | | Niveau Autoclicker (+0.5$/s) |
+| `factory_level` | | Niveau Usine (+2$/s) |
+| `bank_level` | | Niveau NFT (+8$/s) |
+| `click_cost` | | Coût prochain upgrade |
+| `auto_cost` | | Coût prochain upgrade |
+| `factory_cost` | | Coût prochain upgrade |
+| `bank_cost` | | Coût prochain upgrade |
+
+**Revenu passif (calculé) :**
+```python
+passive_income = (auto_level × 0.5) + (factory_level × 2) + (bank_level × 8)
+```
+
+#### 3. **GameHistory** (Historique des Parties)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `id` | PK | Identifiant unique |
+| `user_id` | FK | Joueur (→ User) |
+| `game_type` | | Type : blackjack, roulette, minebomb, slots |
+| `bet_amount` | | Montant parié |
+| `result` | | Résultat : win, lose, draw |
+| `profit` | | Profit/Perte (peut être négatif) |
+| `multiplier` | | Multiplicateur de gain |
+| `details` | | Infos spécifiques (ex: cartes, numéro roulette) |
+| `played_at` | | Date et heure de la partie |
+
+#### 4. **Achievement** (Succès)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `id` | PK | Identifiant unique |
+| `name` | | Nom du succès |
+| `description` | | Description |
+| `icon` | | Emoji (ex: 🏆) |
+| `reward` | | Récompense en $ |
+
+**Exemples de succès :**
+- "Premier pas" - Jouer sa première partie → 100$
+- "Gagnant" - Gagner 10 parties → 500$
+- "Millionnaire" - Atteindre 10,000$ → 2000$
+
+#### 5. **user_achievements** (Table d'Association)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `user_id` | FK | ID utilisateur |
+| `achievement_id` | FK | ID succès |
+| `unlocked_at` | | Date de déblocage |
+
+**Clé primaire composite :** `(user_id, achievement_id)`
+
+#### 6. **GlobalStats** (Statistiques Globales)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `id` | PK | Identifiant unique |
+| `stat_key` | | Clé (ex: "total_games") |
+| `stat_value` | | Valeur |
+| `last_updated` | | Dernière mise à jour |
+
+---
+
+### Relations Résumées
+
+- **User → ClickerData** : 1 à 1 (chaque joueur a ses données clicker)
+- **User → GameHistory** : 1 à N (un joueur a plusieurs parties)
+- **User ↔ Achievement** : N à N (via `user_achievements`)
+
+---
+
+### Exemples de Données
+
+**User :**
+```json
+{
+  "id": 1,
+  "username": "archibogue88",
+  "money": 25000
+}
+```
+
+**GameHistory :**
+```json
+{
+  "game_type": "blackjack",
+  "bet_amount": 100,
+  "result": "win",
+  "profit": 100,
+  "details": {"player_total": 21, "dealer_total": 19}
+}
+```
+
+---
+
+### Programmation Orientée Objet (POO)/ PILE, FILE:
 
 Classe ```GameAction``` représente une action de jeu individuelle :
-
 ```python
 action = GameAction(
     action_type='hit',
@@ -367,15 +465,17 @@ action = GameAction(
 ```
 
 Classe ```ActionStack```, structure de données pour l'historique des actions :
-
 ```python
 stack = ActionStack()
 stack.push(action1)  # Empiler
 stack.push(action2)
 last = stack.pop()   # Dépiler (retourne action2)
 ```
+
 ---
+
 ## Panel Admin
+
 Accès : **Uniquement** ```archibogue88```
 
 Fonctionnalités :
@@ -384,11 +484,13 @@ Fonctionnalités :
 |---------|----------|--------|
 | **Liste utilisateurs** | GET /admin/users | Voir tous les comptes |
 | **Donner argent** | POST /admin/user/add_money/<id> | Ajouter des $ à un joueur |
-| **Supprimer compte** | POST /admin/user/delete/<id> |Supprimer définitivement |
+| **Supprimer compte** | POST /admin/user/delete/<id> | Supprimer définitivement |
 
-## Assertions & Tests
+---
 
-Le code inclut **des verifications** pour garantir l'intégrité des données et la logique correcte. (nous avons voulu en mettre un maximum pour nous assurer de la fiabilîté du code, et surtout d'assurer une experience utilisateur agréable)
+## Validations
+
+Le code inclut **plusieurs validations** pour garantir l'intégrité des données et la logique correcte. (nous avons voulu en mettre un maximum pour nous assurer de la fiabilîté du code, et surtout d'assurer une experience utilisateur agréable)
 
 #### 1- **Gestion de l'Argent**
 ```python
@@ -429,6 +531,9 @@ if len(password) < 6:
     return jsonify({'error': 'Min 6 caractères'}), 400
 ```
 
+**Total : 15+ validations critiques** garantissant l'intégrité et la sécurité de l'application.
+
+---
 
 ## Dépannage
 
@@ -455,17 +560,17 @@ taskkill /PID <PID> /F
 app.run(port=5001)
 ```
 
-#### 2- Fichier de Statistiques Corrompu
+#### 2- Base de Données Corrompue
 
 **Erreur :**
 ```
-JSONDecodeError: Expecting value
+DatabaseError: database disk image is malformed
 ```
 
 **Solution :**
 ```bash
 # Supprimer le fichier et redémarrer
-rm casino_stats.json
+rm instance/casinoeuil.db
 python app.py
 ```
 
@@ -496,7 +601,7 @@ pip install flask
 
 **Solution :**
 
->  Ceci ne devrait JAMAIS arriver grâce aux verifications.
+>  Ceci ne devrait JAMAIS arriver grâce aux validations.
 
 #### 5- Améliorations Ne Fonctionnent Pas
 
@@ -511,6 +616,7 @@ pip install flask
 3. Vérifier la console navigateur (F12)
 4. Reset et réessayer
 
+---
 
 ## Credits
 
