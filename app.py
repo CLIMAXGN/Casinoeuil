@@ -1010,7 +1010,7 @@ def process_queue():
 
 @app.route('/health')
 def health():
-return {'status': 'ok'}, 200
+    return {'status': 'ok'}, 200
 
 init_db()
 
