@@ -59,12 +59,16 @@ Application web de casino complète construite avec **Flask** (backend Python) e
 
 ### Caractéristiques Principales:
 
-- **5 Jeux de Casino** entièrement fonctionnels
-- **Money Clicker** avec 4 types d'améliorations progressives
-- **Statistiques Globales** et par jeu en temps réel
-- **Persistance des Données** entre les sessions
-- **Interface Responsive** avec animations fluides
-- **Système d'Assertions** complet pour la fiabilité
+- 5 Jeux de Casino entièrement fonctionnels
+- Système Multi-Utilisateurs avec authentification sécurisée
+- Money Clicker avec 4 types d'améliorations progressives
+- Statistiques Complètes globales et personnelles
+- Classement des Joueurs en temps réel
+- Panel Admin pour gestion des utilisateurs
+- Base de Données SQLite avec relations complexes
+- Interface Responsive avec animations fluides
+- Architecture POO avec structures de données (PILE/FILE)
+- Sécurité avec hachage de mots de passe
 
 ---
 
@@ -76,6 +80,7 @@ Avant d'exécuter ce projet, assurez-vous d'avoir installé :
 |----------|------------------|-------------|
 | **Python** | 3.7+ | Langage de programmation principal |
 | **pip** | Dernière version | Gestionnaire de paquets Python |
+|SQLite3| |.x|               |Inclus avec Python|
 | **Navigateur Web** | Version récente | Chrome, Firefox, Safari ou Edge |
 
 ---
