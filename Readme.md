@@ -21,7 +21,6 @@
 
 ## Table des Matières
 
-
 - [Description](#description)
 - [Prérequis](#prérequis)
 - [Installation](#installation)
@@ -36,20 +35,13 @@
 - [Structure du Projet](#structure-du-projet)
   - [Fichiers Détaillés](#fichiers-détaillés)
 - [Base de Données](#base-de-données)
-- [Assertions & Tests](#assertions--tests)
-  - [Validation des Statistiques](#1-validation-des-statistiques)
-  - [Gestion de l'Argent](#2-gestion-de-largent)
-  - [Système Clicker](#3-système-clicker)
-  - [Blackjack](#4-blackjack)
-  - [Roulette](#5-roulette)
-  - [MineBomb](#6-minebomb)
-  - [Slot Machine](#7-slot-machine)
+- [Validations](#validations)
 - [Dépannage](#dépannage)
-  - [Port Déjà Utilisé](#1-port-déjà-utilisé)
-  - [Fichier de Statistiques Corrompu](#2-fichier-de-statistiques-corrompu)
-  - [Erreur Flask Non Trouvée](#3-erreur-flask-non-trouvée)
-  - [Argent Négatif](#4-argent-négatif)
-  - [Améliorations Ne Fonctionnent Pas](#5-améliorations-ne-fonctionnent-pas)
+  - [Port Déjà Utilisé](#1--port-déjà-utilisé)
+  - [Base de Données Corrompue](#2--base-de-données-corrompue)
+  - [Erreur Flask Non Trouvée](#3--erreur-flask-non-trouvée)
+  - [Argent Négatif](#4--argent-négatif)
+  - [Améliorations Ne Fonctionnent Pas](#5--améliorations-ne-fonctionnent-pas)
 
 ---
 
@@ -59,12 +51,16 @@ Application web de casino complète construite avec **Flask** (backend Python) e
 
 ### Caractéristiques Principales:
 
-- **5 Jeux de Casino** entièrement fonctionnels
-- **Money Clicker** avec 4 types d'améliorations progressives
-- **Statistiques Globales** et par jeu en temps réel
-- **Persistance des Données** entre les sessions
-- **Interface Responsive** avec animations fluides
-- **Système d'Assertions** complet pour la fiabilité
+- 5 Jeux de Casino entièrement fonctionnels
+- Système Multi-Utilisateurs avec authentification sécurisée
+- Money Clicker avec 4 types d'améliorations progressives
+- Statistiques Complètes globales et personnelles
+- Classement des Joueurs en temps réel
+- Panel Admin pour gestion des utilisateurs
+- Base de Données SQLite avec relations complexes
+- Interface Responsive avec animations fluides
+- Architecture POO avec structures de données (PILE/FILE)
+- Sécurité avec hachage de mots de passe
 
 ---
 
@@ -76,6 +72,7 @@ Avant d'exécuter ce projet, assurez-vous d'avoir installé :
 |----------|------------------|-------------|
 | **Python** | 3.7+ | Langage de programmation principal |
 | **pip** | Dernière version | Gestionnaire de paquets Python |
+| **SQLite** | 3.x | Inclus avec Python |
 | **Navigateur Web** | Version récente | Chrome, Firefox, Safari ou Edge |
 
 ---
@@ -84,30 +81,46 @@ Avant d'exécuter ce projet, assurez-vous d'avoir installé :
 
 ### Étape 1 : Cloner le Dépôt
 ```bash
-git clone https://github.com/votre-nom/casino-web-app.git
-cd casino-web-app
+git clone https://github.com/CLIMAXGN/Casinoeuil.git
+cd casinoeuil
 ```
 
-### Étape 2 : Installer les Dépendances
+### Étape 2 : Créer un Environnement Virtuel
 ```bash
-pip install flask
+python -m venv venv
+
+# macOS/Linux
+source venv/bin/activate
+
+# Windows
+venv\Scripts\activate
 ```
 
-### Étape 3 : Vérifier la Structure des Fichiers
+### Étape 3 : Installer les Dépendances
+```bash
+pip install -r requirements.txt
+```
+
+### Étape 4 : Vérifier la Structure des Fichiers
 ```
 Casinoeuil/
 │
-├── 📄 app.py                     
-│
-├── 📊 casino_stats.json           
+├── 📄 app.py                    
+├── 📄 models.py                
+├── 📂 instance/            
+│   └── casinoeuil.db
 │
 ├── 📂 static/
-│   ├── favicon.ico 
-│   ├── script.js
-│   └── styles.css
+│   ├── favicon.ico         
+│   ├── script.js            
+│   └── styles.css            
 │
 └── 📂 templates/
-    └── index.html   
+    ├── index.html              
+    ├── login.html              
+    ├── register.html            
+    ├── profile.html             
+    └── admin_users.html         
 ```
 
 ---
@@ -126,25 +139,55 @@ Ouvrez votre navigateur et naviguez vers :
 http://localhost:5000
 ```
 
-### Commencer à Jouer
+### Premiers Pas
 
-1. **Vous démarrez avec 0$**
-2. **Utilisez le Money Clicker** pour générer des revenus
-3. **Placez des paris** sur les différents jeux de casino
-4. **Suivez votre progression** avec les statistiques complètes
+1. Créer un compte sur /register
+  Pseudo (min. 3 caractères)
+  Email valide
+  Mot de passe sécurisé (min. 6 caractères)
+  Bonus de bienvenue : 5,000$
+  
+2. Se connecter sur /login
 
-> **Astuce :** Investissez d'abord dans le Money Clicker pour générer un revenu passif avant de jouer aux jeux de casino !
+3. Jouer !
+  Utilisez le Money Clicker pour générer des revenus
+  Placez des paris sur les jeux de casino
+  Suivez vos statistiques et votre classement
 
+---
+
+### Fonctionnalités
+
+#### Pour les Joueurs
+
+- Inscription/Connexion sécurisée
+- 5,000$ de départ pour tous les nouveaux joueurs
+- 5 jeux de casino avec règles authentiques
+- Statistiques détaillées par jeu
+- Classement mondial des meilleurs joueurs
+- Historique des 20 dernières parties
+- Page de profil avec données personnelles
+- Système d'achievements
+
+#### Pour les Administrateurs
+
+- Panel admin sur /admin/users (archibogue88 uniquement)
+- Liste complète des utilisateurs
+- Donner de l'argent à un joueur
+- Supprimer des comptes
+- Statistiques globales (argent total, moyenne, etc.)
+  
 ---
 
 ## Contrôles & Fonctionnement
 
 ### Menu Principal
 
-- **Cliquez sur une carte de jeu** pour accéder au jeu
-- **Bouton "Back to Menu"** pour revenir au menu principal (⬅️)
-- **Bouton "Reset Game"** pour réinitialiser votre argent et améliorations (🔄)
-- **Affichage du solde** et revenu passif en haut de l'écran
+- Cartes de jeu cliquables pour lancer un jeu
+- Bouton "← Back" pour revenir au menu
+- Affichage en temps réel du solde et revenu passif
+- Classement des joueurs en bas de page
+- Profil pour voir vos statistiques détaillées
 
 ### Money Clicker
 
@@ -230,7 +273,7 @@ http://localhost:5000
 |---------|----------|--------|
 | 💎 **Diamant** | 100x | Ultra Rare |
 | 7️⃣ **Sept** | 50x | Très Rare |
-| 🍉 **Pastèque** | 20x | Rare |
+| 🎰 **Pastèque** | 20x | Rare |
 | 🍋 **Citron** | 15x | Peu Commun |
 | 🍊 **Orange** | 12x | Commun |
 | 🍇 **Raisin** | 10x | Très Commun |
@@ -243,158 +286,254 @@ http://localhost:5000
 ```
 Casinoeuil/
 │
-├── 📄 app.py                     
-│
-├── 📊 casino_stats.json           
+├── 📄 app.py                    
+├── 📄 models.py                
+├── 📂 instance/            
+│   └── casinoeuil.db
 │
 ├── 📂 static/
-│   ├── favicon.ico 
-│   ├── script.js
-│   └── styles.css
+│   ├── favicon.ico         
+│   ├── script.js            
+│   └── styles.css            
 │
 └── 📂 templates/
-    └── index.html           
+    ├── index.html              
+    ├── login.html              
+    ├── register.html            
+    ├── profile.html             
+    └── admin_users.html            
 ```
 
 ### Fichiers Détaillés
 
 | Fichier | Lignes | Responsabilité |
 |---------|--------|----------------|
-| `app.py` | ~800 | Logique serveur, API REST, gestion sessions |
+| `app.py` | ~1000 | Logique serveur, API REST, gestion sessions |
+| `models.py` | ~400 | Modèles DB (User, ClickerData, GameHistory), POO, structures PILE/FILE |
 | `script.js` | ~700 | Interactions client, appels asynchrones |
 | `styles.css` | ~900 | Design responsive, animations, thème |
 | `index.html` | ~400 | Structure HTML, interfaces jeux |
+| `X.html` | ~ | Toutes les autres pages HTML |
 
 ---
 
 ## Base de Données
 
-### Stockage en Session (Flask Session)
+### Architecture SQLite avec SQLAlchemy
 
-**Données utilisateur (à titre d'exemple) :**
-```python
-session = {
-    'money': 1250,                    # Solde actuel
-    'clicker': {
-        'clickPower': 5,              # Puissance par clic
-        'clickLevel': 5,              # Niveau d'amélioration
-        'autoLevel': 3,               # Niveau Auto-Clicker
-        'factoryLevel': 2,            # Niveau Factory
-        'bankLevel': 1,               # Niveau Bank
-        'clickCost': 76,              # Coût prochaine amélioration
-        'autoCost': 180,
-        'factoryCost': 800,
-        'bankCost': 2500
-    },
-    'bj_*': {...},                    # État actif Blackjack
-    'mb_*': {...}                     # État actif MineBomb
-}
-```
+Notre application utilise **SQLite** avec **SQLAlchemy** comme ORM. Voici les **6 tables principales** :
 
-### Statistiques Globales (Les statistiques présentées ci-dessous ne sont pas représentatives mais utilisées uniquement à titre d'exemple)
+#### Tables Principales
 
-**Données persistantes partagées :**
-```json
-{
-  "totalGames": 44,
-  "totalWins": 8,
-  "totalLosses": 35,
-  "biggestWin": 100,
-  "biggestLoss": 1000,
-  "totalWagered": 4384,
-  "totalWinnings": 420,
-  "blackjack": {
-    "games": 10,
-    "wins": 4,
-    "wagered": 500,
-    "won": 200
-  },
-  "roulette": {
-    "games": 7,
-    "wins": 3,
-    "wagered": 484,
-    "won": 120
-  },
-  "minebomb": {
-    "games": 11,
-    "wins": 0,
-    "wagered": 2600,
-    "won": 0
-  },
-  "slots": {
-    "games": 16,
-    "wins": 1,
-    "wagered": 800,
-    "won": 100
-  }
-}
-```
-
-**Champs calculés automatiquement :**
-
-- **Taux de victoire** : `(totalWins / totalGames) × 100`
-- **Profit net** : `totalWinnings - totalWagered`
-- **Taux par jeu** : Calculé individuellement
+| Table | Description | Relations |
+|-------|-------------|-----------|
+| **User** | Utilisateurs de l'application | 1→1 ClickerData, 1→N GameHistory |
+| **ClickerData** | Données du Money Clicker | N→1 User |
+| **GameHistory** | Historique des parties | N→1 User |
+| **Achievement** | Succès débloquables | N↔N User |
+| **user_achievements** | Table d'association | Lie User et Achievement |
+| **GlobalStats** | Statistiques globales | Indépendante |
 
 ---
 
-## Assertions & Tests
+### Détails des Tables
 
-Le code inclut **+50 assertions** pour garantir l'intégrité des données et la logique correcte. (nous avons voulu en mettre un maximum pour nous assurer de la fiabilîté du code, et surtout d'assurer une experience utilisateur agréable)
+#### 1. **User** (Utilisateurs)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `id` | PK | Identifiant unique |
+| `username` | | Nom d'utilisateur |
+| `email` | | Email |
+| `password_hash` | | Mot de passe haché |
+| `money` | | Solde du joueur |
+| `created_at` | | Date de création |
+| `last_login` | | Dernière connexion |
 
-#### 1- **Validation des Statistiques**
+**Relations :**
+- Un User a **1 seul** ClickerData
+- Un User a **plusieurs** GameHistory
+- Un User peut débloquer **plusieurs** Achievements
+
+#### 2. **ClickerData** (Money Clicker)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `id` | PK | Identifiant unique |
+| `user_id` | FK | Propriétaire (→ User) |
+| `click_power` | | Gain par clic |
+| `click_level` | | Niveau amélioration |
+| `auto_level` | | Niveau Autoclicker (+0.5$/s) |
+| `factory_level` | | Niveau Usine (+2$/s) |
+| `bank_level` | | Niveau NFT (+8$/s) |
+| `click_cost` | | Coût prochain upgrade |
+| `auto_cost` | | Coût prochain upgrade |
+| `factory_cost` | | Coût prochain upgrade |
+| `bank_cost` | | Coût prochain upgrade |
+
+**Revenu passif (calculé) :**
 ```python
-assert isinstance(stats, dict), "Stats doit être un dictionnaire"
-assert stats['totalGames'] >= 0, "totalGames ne peut pas être négatif"
-assert stats['totalWins'] <= stats['totalGames'], "totalWins ≤ totalGames"
-assert stats['biggestWin'] >= 0, "biggestWin ne peut pas être négatif"
+passive_income = (auto_level × 0.5) + (factory_level × 2) + (bank_level × 8)
 ```
 
-#### 2- **Gestion de l'Argent**
-```python
-assert money >= 0, "L'argent ne peut pas être négatif"
-assert bet > 0, "La mise doit être positive"
-assert session['money'] == money_before - cost, "Transaction exacte"
+#### 3. **GameHistory** (Historique des Parties)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `id` | PK | Identifiant unique |
+| `user_id` | FK | Joueur (→ User) |
+| `game_type` | | Type : blackjack, roulette, minebomb, slots |
+| `bet_amount` | | Montant parié |
+| `result` | | Résultat : win, lose, draw |
+| `profit` | | Profit/Perte (peut être négatif) |
+| `multiplier` | | Multiplicateur de gain |
+| `details` | | Infos spécifiques (ex: cartes, numéro roulette) |
+| `played_at` | | Date et heure de la partie |
+
+#### 4. **Achievement** (Succès)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `id` | PK | Identifiant unique |
+| `name` | | Nom du succès |
+| `description` | | Description |
+| `icon` | | Emoji (ex: 🏆) |
+| `reward` | | Récompense en $ |
+
+**Exemples de succès :**
+- "Premier pas" - Jouer sa première partie → 100$
+- "Gagnant" - Gagner 10 parties → 500$
+- "Millionnaire" - Atteindre 10,000$ → 2000$
+
+#### 5. **user_achievements** (Table d'Association)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `user_id` | FK | ID utilisateur |
+| `achievement_id` | FK | ID succès |
+| `unlocked_at` | | Date de déblocage |
+
+**Clé primaire composite :** `(user_id, achievement_id)`
+
+#### 6. **GlobalStats** (Statistiques Globales)
+| Colonne | Clés | Description |
+|---------|------|-------------|
+| `id` | PK | Identifiant unique |
+| `stat_key` | | Clé (ex: "total_games") |
+| `stat_value` | | Valeur |
+| `last_updated` | | Dernière mise à jour |
+
+---
+
+### Relations Résumées
+
+- **User → ClickerData** : 1 à 1 (chaque joueur a ses données clicker)
+- **User → GameHistory** : 1 à N (un joueur a plusieurs parties)
+- **User ↔ Achievement** : N à N (via `user_achievements`)
+
+---
+
+### Exemples de Données
+
+**User :**
+```json
+{
+  "id": 1,
+  "username": "archibogue88",
+  "money": 25000
+}
 ```
 
-#### 3- **Système Clicker**
-```python
-assert clickPower > 0, "clickPower doit être positif"
-assert autoLevel >= 0, "autoLevel ne peut pas être négatif"
-assert cost > 0, "Le coût doit être positif"
-assert passive >= 0, "Le revenu passif ne peut pas être négatif"
+**GameHistory :**
+```json
+{
+  "game_type": "blackjack",
+  "bet_amount": 100,
+  "result": "win",
+  "profit": 100,
+  "details": {"player_total": 21, "dealer_total": 19}
+}
 ```
 
-#### 4- **Blackjack**
+---
+
+### Programmation Orientée Objet (POO)/ PILE, FILE:
+
+Classe ```GameAction``` représente une action de jeu individuelle :
 ```python
-assert len(deck) == 52 * num_decks, "Deck size correct"
-assert len(player_hand) == 2, "Main initiale = 2 cartes"
-assert card['value'] in card_values, "Valeur de carte valide"
-assert total >= 0, "Total ne peut pas être négatif"
+action = GameAction(
+    action_type='hit',
+    card={'suit': '♥', 'value': 'K'},
+    total=20,
+    details={'bet': 100}
+)
 ```
 
-#### 5- **Roulette**
+Classe ```ActionStack```, structure de données pour l'historique des actions :
 ```python
-assert 0 <= number <= 36, "Numéro entre 0 et 36"
-assert color in ['Red', 'Black', 'Green'], "Couleur valide"
-assert mode in ['color', 'number'], "Mode invalide"
+stack = ActionStack()
+stack.push(action1)  # Empiler
+stack.push(action2)
+last = stack.pop()   # Dépiler (retourne action2)
 ```
 
-#### 6- **MineBomb**
+---
+
+## Panel Admin
+
+Accès : **Uniquement** ```archibogue88```
+
+Fonctionnalités :
+
+| Action | Endpoint | Description |
+|---------|----------|--------|
+| **Liste utilisateurs** | GET /admin/users | Voir tous les comptes |
+| **Donner argent** | POST /admin/user/add_money/<id> | Ajouter des $ à un joueur |
+| **Supprimer compte** | POST /admin/user/delete/<id> | Supprimer définitivement |
+
+---
+
+## Validations
+
+Le code inclut **plusieurs validations** pour garantir l'intégrité des données et la logique correcte. (nous avons voulu en mettre un maximum pour nous assurer de la fiabilîté du code, et surtout d'assurer une experience utilisateur agréable)
+
+#### 1- **Gestion de l'Argent**
 ```python
-assert len(grid) == 25, "Grille 5x5 = 25 cases"
-assert 3 <= bombs <= 10, "Bombes entre 3 et 10"
-assert grid.count('bomb') == bombs, "Nombre de bombes exact"
-assert multiplier > 0, "Multiplicateur positif"
-assert 0 <= pos < 25, "Position valide"
+# models.py - Classe User
+def add_money(self, amount):
+    if amount < 0:
+        raise ValueError("Le montant ne peut pas être négatif")
+    self.money += amount
+
+def remove_money(self, amount):
+    if amount < 0:
+        raise ValueError("Le montant ne peut pas être négatif")
+    if self.money < amount:
+        raise ValueError("Fonds insuffisants")
+    self.money -= amount
 ```
 
-#### 7- **Slot Machine**
+#### 2- **Validation des Mises**
 ```python
-assert len(reels) == 3, "3 rouleaux exactement"
-assert len(weighted_symbols) == 80, "80 symboles pondérés"
-assert multiplier > 0, "Multiplicateur positif pour gains"
+# Blackjack, Roulette, Slots
+if bet < 10:
+    return jsonify({'error': 'Mise minimum : 10$'}), 400
+if bet > current_user.money:
+    return jsonify({'error': 'Mise trop élevée'}), 400
 ```
+
+#### 3- **Validation MineBomb**
+```python
+if bombs < 3 or bombs > 10:
+    return jsonify({'error': 'Entre 3 et 10 bombes'}), 400
+```
+
+#### 4- **Validation Inscription**
+```python
+if len(username) < 3:
+    return jsonify({'error': 'Min 3 caractères'}), 400
+if len(password) < 6:
+    return jsonify({'error': 'Min 6 caractères'}), 400
+```
+
+**Total : 15+ validations** garantissant l'intégrité et la sécurité de l'application.
+
+---
 
 ## Dépannage
 
@@ -421,17 +560,17 @@ taskkill /PID <PID> /F
 app.run(port=5001)
 ```
 
-#### 2- Fichier de Statistiques Corrompu
+#### 2- Base de Données Corrompue
 
 **Erreur :**
 ```
-JSONDecodeError: Expecting value
+DatabaseError: database disk image is malformed
 ```
 
 **Solution :**
 ```bash
 # Supprimer le fichier et redémarrer
-rm casino_stats.json
+rm instance/casinoeuil.db
 python app.py
 ```
 
@@ -462,7 +601,7 @@ pip install flask
 
 **Solution :**
 
->  Ceci ne devrait JAMAIS arriver grâce aux assertions.
+>  Ceci ne devrait JAMAIS arriver grâce aux validations.
 
 #### 5- Améliorations Ne Fonctionnent Pas
 
@@ -477,12 +616,13 @@ pip install flask
 3. Vérifier la console navigateur (F12)
 4. Reset et réessayer
 
+---
 
 ## Credits
 
 <p align="center">
   <strong>Fait par TeamCipo & KAYOZZ</strong><br>
-  <strong>Trust us with your Entertainement!</strong>
+  <strong>Trust us with your Entertainment!</strong>
 </p>
 
 ---
