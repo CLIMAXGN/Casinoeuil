@@ -80,7 +80,7 @@ Avant d'exécuter ce projet, assurez-vous d'avoir installé :
 |----------|------------------|-------------|
 | **Python** | 3.7+ | Langage de programmation principal |
 | **pip** | Dernière version | Gestionnaire de paquets Python |
-|SQLite3| |.x|               |Inclus avec Python|
+|SQLite3 |.x |Inclus avec Python|
 | **Navigateur Web** | Version récente | Chrome, Firefox, Safari ou Edge |
 
 ---
@@ -89,8 +89,8 @@ Avant d'exécuter ce projet, assurez-vous d'avoir installé :
 
 ### Étape 1 : Cloner le Dépôt
 ```bash
-git clone https://github.com/votre-nom/casino-web-app.git
-cd casino-web-app
+git clone https://github.com/CLIMAXGN/Casinoeuil.git
+cd casinoeuil
 ```
 
 ### Étape 2 : Installer les Dépendances
