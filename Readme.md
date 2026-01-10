@@ -92,27 +92,42 @@ Avant d'exécuter ce projet, assurez-vous d'avoir installé :
 git clone https://github.com/CLIMAXGN/Casinoeuil.git
 cd casinoeuil
 ```
-
-### Étape 2 : Installer les Dépendances
+Étape 2 : Créer un Environnement Virtuel
 ```bash
-pip install flask
+python -m venv venv
+
+# macOS/Linux
+source venv/bin/activate
+
+# Windows
+venv\Scripts\activate
 ```
 
-### Étape 3 : Vérifier la Structure des Fichiers
+### Étape 3 : Installer les Dépendances
+```bash
+pip install -r requirements.txt
+```
+
+### Étape 4 : Vérifier la Structure des Fichiers
 ```
 Casinoeuil/
 │
-├── 📄 app.py                     
-│
-├── 📊 casino_stats.json           
+├── 📄 app.py                    
+├── 📄 models.py                
+├── 📂 instance/            
+│   └── casinoeuil.db
 │
 ├── 📂 static/
-│   ├── favicon.ico 
-│   ├── script.js
-│   └── styles.css
+│   ├── favicon.ico         
+│   ├── script.js            
+│   └── styles.css            
 │
 └── 📂 templates/
-    └── index.html   
+    ├── index.html              
+    ├── login.html              
+    ├── register.html            
+    ├── profile.html             
+    └── admin_users.html         
 ```
 
 ---
@@ -131,25 +146,52 @@ Ouvrez votre navigateur et naviguez vers :
 http://localhost:5000
 ```
 
-### Commencer à Jouer
+### Premiers Pas
 
-1. **Vous démarrez avec 0$**
-2. **Utilisez le Money Clicker** pour générer des revenus
-3. **Placez des paris** sur les différents jeux de casino
-4. **Suivez votre progression** avec les statistiques complètes
+1. Créer un compte sur /register
+  Pseudo (min. 3 caractères)
+  Email valide
+  Mot de passe sécurisé (min. 6 caractères)
+  Bonus de bienvenue : 5,000$
+  
+2. Se connecter sur /login
 
-> **Astuce :** Investissez d'abord dans le Money Clicker pour générer un revenu passif avant de jouer aux jeux de casino !
+3. Jouer !
+  Utilisez le Money Clicker pour générer des revenus
+  Placez des paris sur les jeux de casino
+  Suivez vos statistiques et votre classement
 
 ---
+### Fonctionnalités
+#### Pour les Joueurs
 
+- Inscription/Connexion sécurisée
+- 5,000$ de départ pour tous les nouveaux joueurs
+- 5 jeux de casino avec règles authentiques
+- Statistiques détaillées par jeu
+- Classement mondial des meilleurs joueurs
+- Historique des 20 dernières parties
+- Page de profil avec données personnelles
+- Système d'achievements
+
+#### Pour les Administrateurs
+
+- Panel admin sur /admin/users (archibogue88 uniquement)
+- Liste complète des utilisateurs
+- Donner de l'argent à un joueur
+- Supprimer des comptes
+- Statistiques globales (argent total, moyenne, etc.)
+  
+---
 ## Contrôles & Fonctionnement
 
 ### Menu Principal
 
-- **Cliquez sur une carte de jeu** pour accéder au jeu
-- **Bouton "Back to Menu"** pour revenir au menu principal (⬅️)
-- **Bouton "Reset Game"** pour réinitialiser votre argent et améliorations (🔄)
-- **Affichage du solde** et revenu passif en haut de l'écran
+- Cartes de jeu cliquables pour lancer un jeu
+- Bouton "← Back" pour revenir au menu
+- Affichage en temps réel du solde et revenu passif
+- Classement des joueurs en bas de page
+- Profil pour voir vos statistiques détaillées
 
 ### Money Clicker
 
@@ -235,7 +277,7 @@ http://localhost:5000
 |---------|----------|--------|
 | 💎 **Diamant** | 100x | Ultra Rare |
 | 7️⃣ **Sept** | 50x | Très Rare |
-| 🍉 **Pastèque** | 20x | Rare |
+| 🎰 **Pastèque** | 20x | Rare |
 | 🍋 **Citron** | 15x | Peu Commun |
 | 🍊 **Orange** | 12x | Commun |
 | 🍇 **Raisin** | 10x | Très Commun |
@@ -248,158 +290,111 @@ http://localhost:5000
 ```
 Casinoeuil/
 │
-├── 📄 app.py                     
-│
-├── 📊 casino_stats.json           
+├── 📄 app.py                    
+├── 📄 models.py                
+├── 📂 instance/            
+│   └── casinoeuil.db
 │
 ├── 📂 static/
-│   ├── favicon.ico 
-│   ├── script.js
-│   └── styles.css
+│   ├── favicon.ico         
+│   ├── script.js            
+│   └── styles.css            
 │
 └── 📂 templates/
-    └── index.html           
+    ├── index.html              
+    ├── login.html              
+    ├── register.html            
+    ├── profile.html             
+    └── admin_users.html            
 ```
 
 ### Fichiers Détaillés
 
 | Fichier | Lignes | Responsabilité |
 |---------|--------|----------------|
-| `app.py` | ~800 | Logique serveur, API REST, gestion sessions |
+| `app.py` | ~1000 | Logique serveur, API REST, gestion sessions |
+| `models.py` | ~400 | Modèles DB (User, ClickerData, GameHistory), POO, structures PILE/FILE |
 | `script.js` | ~700 | Interactions client, appels asynchrones |
 | `styles.css` | ~900 | Design responsive, animations, thème |
 | `index.html` | ~400 | Structure HTML, interfaces jeux |
+| `X.html` | ~ | Toutes les autres pages HTML |
 
 ---
 
 ## Base de Données
 
+┌─────────────┐
+│    User     │ ← Utilisateur principal
+├─────────────┤
+│ id (PK)     │
+│ username    │──┐
+│ email       │  │
+│ password    │  │
+│ money       │  │
+│ created_at  │  │
+└─────────────┘  │
+                 │
+       ┌─────────┴────────────┬──────────────┐
+       │                      │              │
+       ▼                      ▼              ▼
+┌──────────────┐     ┌──────────────┐  ┌─────────────┐
+│ ClickerData  │     │ GameHistory  │  │ Achievement │
+├──────────────┤     ├──────────────┤  ├─────────────┤
+│ id (PK)      │     │ id (PK)      │  │ id (PK)     │
+│ user_id (FK) │     │ user_id (FK) │  │ name        │
+│ click_power  │     │ game_type    │  │ description │
+│ click_level  │     │ bet_amount   │  │ icon        │
+│ auto_level   │     │ result       │  │ reward      │
+│ ...          │     │ profit       │  └─────────────┘
+└──────────────┘     │ multiplier   │
+                     │ details      │
+                     │ played_at    │
+                     └──────────────┘
+
 ### Stockage en Session (Flask Session)
 
-**Données utilisateur (à titre d'exemple) :**
+**Programmation Orientée Objet (POO)/ PILE, FILE:**
+
+Classe ```GameAction``` représente une action de jeu individuelle :
+
 ```python
-session = {
-    'money': 1250,                    # Solde actuel
-    'clicker': {
-        'clickPower': 5,              # Puissance par clic
-        'clickLevel': 5,              # Niveau d'amélioration
-        'autoLevel': 3,               # Niveau Auto-Clicker
-        'factoryLevel': 2,            # Niveau Factory
-        'bankLevel': 1,               # Niveau Bank
-        'clickCost': 76,              # Coût prochaine amélioration
-        'autoCost': 180,
-        'factoryCost': 800,
-        'bankCost': 2500
-    },
-    'bj_*': {...},                    # État actif Blackjack
-    'mb_*': {...}                     # État actif MineBomb
-}
+action = GameAction(
+    action_type='hit',
+    card={'suit': '♥', 'value': 'K'},
+    total=20,
+    details={'bet': 100}
+)
 ```
 
-### Statistiques Globales (Les statistiques présentées ci-dessous ne sont pas représentatives mais utilisées uniquement à titre d'exemple)
+Classe ```ActionStack```, structure de données pour l'historique des actions :
 
-**Données persistantes partagées :**
-```json
-{
-  "totalGames": 44,
-  "totalWins": 8,
-  "totalLosses": 35,
-  "biggestWin": 100,
-  "biggestLoss": 1000,
-  "totalWagered": 4384,
-  "totalWinnings": 420,
-  "blackjack": {
-    "games": 10,
-    "wins": 4,
-    "wagered": 500,
-    "won": 200
-  },
-  "roulette": {
-    "games": 7,
-    "wins": 3,
-    "wagered": 484,
-    "won": 120
-  },
-  "minebomb": {
-    "games": 11,
-    "wins": 0,
-    "wagered": 2600,
-    "won": 0
-  },
-  "slots": {
-    "games": 16,
-    "wins": 1,
-    "wagered": 800,
-    "won": 100
-  }
-}
+```python
+stack = ActionStack()
+stack.push(action1)  # Empiler
+stack.push(action2)
+last = stack.pop()   # Dépiler (retourne action2)
 ```
-
-**Champs calculés automatiquement :**
-
-- **Taux de victoire** : `(totalWins / totalGames) × 100`
-- **Profit net** : `totalWinnings - totalWagered`
-- **Taux par jeu** : Calculé individuellement
-
 ---
+## Panel Admin
+Accès : **Uniquement** ```archibogue88```
+
+Fonctionnalités :
+
+| Action | Endpoint | Description |
+|---------|----------|--------|
+| **Liste utilisateurs** | GET /admin/users | Voir tous les comptes |
+| **Donner argent** | POST /admin/user/add_money/<id> | Ajouter des $ à un joueur |
+| **Supprimer compte** | POST /admin/user/delete/<id> |Supprimer définitivement |
 
 ## Assertions & Tests
 
-Le code inclut **+50 assertions** pour garantir l'intégrité des données et la logique correcte. (nous avons voulu en mettre un maximum pour nous assurer de la fiabilîté du code, et surtout d'assurer une experience utilisateur agréable)
+Le code inclut **des verifications** pour garantir l'intégrité des données et la logique correcte. (nous avons voulu en mettre un maximum pour nous assurer de la fiabilîté du code, et surtout d'assurer une experience utilisateur agréable)
 
-#### 1- **Validation des Statistiques**
+#### 1- **X**
 ```python
-assert isinstance(stats, dict), "Stats doit être un dictionnaire"
-assert stats['totalGames'] >= 0, "totalGames ne peut pas être négatif"
-assert stats['totalWins'] <= stats['totalGames'], "totalWins ≤ totalGames"
-assert stats['biggestWin'] >= 0, "biggestWin ne peut pas être négatif"
+X
 ```
 
-#### 2- **Gestion de l'Argent**
-```python
-assert money >= 0, "L'argent ne peut pas être négatif"
-assert bet > 0, "La mise doit être positive"
-assert session['money'] == money_before - cost, "Transaction exacte"
-```
-
-#### 3- **Système Clicker**
-```python
-assert clickPower > 0, "clickPower doit être positif"
-assert autoLevel >= 0, "autoLevel ne peut pas être négatif"
-assert cost > 0, "Le coût doit être positif"
-assert passive >= 0, "Le revenu passif ne peut pas être négatif"
-```
-
-#### 4- **Blackjack**
-```python
-assert len(deck) == 52 * num_decks, "Deck size correct"
-assert len(player_hand) == 2, "Main initiale = 2 cartes"
-assert card['value'] in card_values, "Valeur de carte valide"
-assert total >= 0, "Total ne peut pas être négatif"
-```
-
-#### 5- **Roulette**
-```python
-assert 0 <= number <= 36, "Numéro entre 0 et 36"
-assert color in ['Red', 'Black', 'Green'], "Couleur valide"
-assert mode in ['color', 'number'], "Mode invalide"
-```
-
-#### 6- **MineBomb**
-```python
-assert len(grid) == 25, "Grille 5x5 = 25 cases"
-assert 3 <= bombs <= 10, "Bombes entre 3 et 10"
-assert grid.count('bomb') == bombs, "Nombre de bombes exact"
-assert multiplier > 0, "Multiplicateur positif"
-assert 0 <= pos < 25, "Position valide"
-```
-
-#### 7- **Slot Machine**
-```python
-assert len(reels) == 3, "3 rouleaux exactement"
-assert len(weighted_symbols) == 80, "80 symboles pondérés"
-assert multiplier > 0, "Multiplicateur positif pour gains"
-```
 
 ## Dépannage
 
