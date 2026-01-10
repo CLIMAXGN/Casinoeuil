@@ -2,7 +2,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from collections import deque
 
 db = SQLAlchemy()
 
@@ -179,24 +178,6 @@ class GlobalStats(db.Model):
         return f'<GlobalStats {self.stat_key}={self.stat_value}>'
 
 
-class DailyBonus(db.Model):
-    """Bonus quotidiens"""
-    __tablename__ = 'daily_bonuses'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    claimed_date = db.Column(db.Date, nullable=False)
-    bonus_amount = db.Column(db.Integer, nullable=False)
-    streak_days = db.Column(db.Integer, default=1)
-    
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'claimed_date', name='unique_daily_bonus'),
-    )
-    
-    def __repr__(self):
-        return f'<DailyBonus user_id={self.user_id} date={self.claimed_date}>'
-
-
 # ============================================
 # PROGRAMMATION ORIENTÉE OBJET + STRUCTURES DE DONNÉES
 # ============================================
@@ -280,62 +261,15 @@ class ActionStack:
     def __repr__(self):
         return f'<ActionStack size={self.size()}>'
 
-
-class GameQueue:
-    """
-    FILE (Queue - FIFO: First In First Out)
-    Structure de données pour gérer les parties en attente
-    Le premier joueur à rejoindre est le premier à jouer
-    """
-    def __init__(self):
-        self.queue = deque()  # FILE utilisant deque de collections
-    
-    def enqueue(self, game_data):
-        """Enfiler (ajouter à la fin de la file)"""
-        self.queue.append(game_data)
-    
-    def dequeue(self):
-        """Défiler (retirer et retourner le premier élément)"""
-        if not self.is_empty():
-            return self.queue.popleft()
-        return None
-    
-    def peek(self):
-        """Voir le premier élément sans le retirer"""
-        if not self.is_empty():
-            return self.queue[0]
-        return None
-    
-    def is_empty(self):
-        """Vérifier si la file est vide"""
-        return len(self.queue) == 0
-    
-    def size(self):
-        """Retourner la taille de la file"""
-        return len(self.queue)
-    
-    def clear(self):
-        """Vider complètement la file"""
-        self.queue.clear()
-    
-    def get_all(self):
-        """Obtenir tous les éléments de la file"""
-        return list(self.queue)
-    
-    def __repr__(self):
-        return f'<GameQueue size={self.size()}>'
-
-
 class GameManager:
     """
     Classe de gestion des jeux (POO)
     Utilise les structures PILE et FILE
     """
     def __init__(self):
-        self.action_history = ActionStack()  # PILE pour historique
-        self.pending_games = GameQueue()  # FILE pour parties en attente
-        self.active_games = {}  # Dictionnaire des parties actives
-    
+        self.action_history = ActionStack()
+        self.active_games = {}
+        
     def start_game(self, user_id, game_type, bet):
         """Démarre une nouvelle partie"""
         game_data = {
@@ -345,10 +279,6 @@ class GameManager:
             'started_at': datetime.utcnow()
         }
         
-        # Ajouter à la file d'attente
-        self.pending_games.enqueue(game_data)
-        
-        # Enregistrer l'action dans la pile
         action = GameAction('start', details={'game_type': game_type, 'bet': bet})
         self.action_history.push(action)
         
@@ -380,20 +310,12 @@ class GameManager:
         """Récupère tout l'historique des actions"""
         return self.action_history.get_all()
     
-    def get_pending_games_count(self):
-        """Nombre de parties en attente"""
-        return self.pending_games.size()
-    
-    def process_next_game(self):
-        """Traite la prochaine partie en attente (FILE)"""
-        return self.pending_games.dequeue()
-    
     def clear_history(self):
         """Réinitialise l'historique"""
         self.action_history.clear()
     
     def __repr__(self):
-        return f'<GameManager active={len(self.active_games)} pending={self.pending_games.size()} history={self.action_history.size()}>'
+        return f'<GameManager active={len(self.active_games)} history={self.action_history.size()}>'
 
 
 # Instance globale du gestionnaire de jeux

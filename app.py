@@ -12,7 +12,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///casinoeuil.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Importer db et les modèles APRÈS avoir configuré l'app
-from models import db, User, ClickerData, GameHistory, Achievement, GlobalStats, DailyBonus, GameManager
+from models import db, User, ClickerData, GameHistory, Achievement, GlobalStats, GameManager
 
 # Instance globale du gestionnaire (POO + PILE + FILE)
 game_manager = GameManager()
@@ -968,45 +968,7 @@ def init_db():
             ]
             db.session.add_all(achievements)
             db.session.commit()
-            print("✅ Achievements créés")
-
-# ============================================
-# FILE D'ATTENTE (démonstration FILE/Queue)
-# ============================================
-
-@app.route('/api/queue/join', methods=['POST'])
-@login_required
-def join_queue():
-    """FILE : Rejoindre la file d'attente (enqueue)"""
-    game_manager.pending_games.enqueue({
-        'user_id': current_user.id,
-        'username': current_user.username,
-        'joined_at': datetime.utcnow().isoformat()
-    })
-    
-    return jsonify({
-        'success': True,
-        'position': game_manager.pending_games.size()
-    })
-
-@app.route('/api/queue/status')
-@login_required
-def queue_status():
-    """FILE : Voir l'état de la file (peek)"""
-    return jsonify({
-        'queue_size': game_manager.pending_games.size(),
-        'next_player': game_manager.pending_games.peek()
-    })
-
-@app.route('/api/queue/process', methods=['POST'])
-@login_required
-def process_queue():
-    """FILE : Traiter le prochain (dequeue)"""
-    if current_user.username != 'archibogue88':
-        return jsonify({'error': 'Accès refusé'}), 403
-    
-    next_game = game_manager.pending_games.dequeue()
-    return jsonify({'game_started': next_game, 'remaining': game_manager.pending_games.size()})
+            print("Achievements créés")
 
 @app.route('/health')
 def health():
