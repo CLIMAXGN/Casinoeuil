@@ -27,6 +27,25 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # ============================================
+# GESTIONNAIRE D'ERREURS GLOBAL
+# ============================================
+
+@app.errorhandler(AssertionError)
+def handle_assertion_error(error):
+    """Gestionnaire global pour les AssertionError"""
+    return jsonify({'error': str(error)}), 400
+
+@app.errorhandler(403)
+def handle_forbidden(error):
+    """Gestionnaire pour les erreurs 403"""
+    return jsonify({'error': 'Accès refusé'}), 403
+
+@app.errorhandler(404)
+def handle_not_found(error):
+    """Gestionnaire pour les erreurs 404"""
+    return jsonify({'error': 'Ressource non trouvée'}), 404
+
+# ============================================
 # ROUTES D'AUTHENTIFICATION
 # ============================================
 
@@ -39,20 +58,12 @@ def register():
         email = data.get('email')
         password = data.get('password')
         
-        if not username or not email or not password:
-            return jsonify({'error': 'Tous les champs sont requis'}), 400
-        
-        if len(username) < 3:
-            return jsonify({'error': 'Le nom d\'utilisateur doit avoir au moins 3 caractères'}), 400
-        
-        if len(password) < 6:
-            return jsonify({'error': 'Le mot de passe doit avoir au moins 6 caractères'}), 400
-        
-        if User.query.filter_by(username=username).first():
-            return jsonify({'error': 'Nom d\'utilisateur déjà pris'}), 400
-        
-        if User.query.filter_by(email=email).first():
-            return jsonify({'error': 'Email déjà utilisé'}), 400
+        # ASSERTIONS
+        assert username and email and password, "Tous les champs sont requis"
+        assert len(username) >= 3, "Le nom d'utilisateur doit avoir au moins 3 caractères"
+        assert len(password) >= 6, "Le mot de passe doit avoir au moins 6 caractères"
+        assert not User.query.filter_by(username=username).first(), "Nom d'utilisateur déjà pris"
+        assert not User.query.filter_by(email=email).first(), "Email déjà utilisé"
         
         user = User(username=username, email=email, money=5000)
         user.set_password(password)
@@ -77,13 +88,14 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         
-        if user and user.check_password(password):
-            login_user(user)
-            user.last_login = datetime.utcnow()
-            db.session.commit()
-            return jsonify({'success': True})
+        # ASSERTIONS
+        assert user, "Utilisateur non trouvé"
+        assert user.check_password(password), "Mot de passe incorrect"
         
-        return jsonify({'error': 'Identifiants invalides'}), 401
+        login_user(user)
+        user.last_login = datetime.utcnow()
+        db.session.commit()
+        return jsonify({'success': True})
     
     return render_template('login.html')
 
@@ -115,8 +127,8 @@ def profile():
 def admin_users():
     """Page admin pour voir tous les utilisateurs"""
     
-    if current_user.username != 'archibogue88':
-        return "Accès refusé - Vous n'êtes pas admin", 403
+    # ASSERTION
+    assert current_user.username == 'archibogue88', "Accès refusé - Vous n'êtes pas admin"
     
     all_users = User.query.order_by(User.money.desc()).all()
     
@@ -137,15 +149,12 @@ def admin_users():
 @app.route('/admin/user/delete/<int:user_id>', methods=['POST'])
 @login_required
 def admin_delete_user(user_id):
-    if current_user.username != 'archibogue88':
-        return jsonify({'error': 'Accès refusé'}), 403
-    
-    if user_id == current_user.id:
-        return jsonify({'error': 'Tu ne peux pas te supprimer toi-même !'}), 400
+    # ASSERTIONS
+    assert current_user.username == 'archibogue88', "Accès refusé"
+    assert user_id != current_user.id, "Tu ne peux pas te supprimer toi-même !"
     
     user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'Utilisateur non trouvé'}), 404
+    assert user, "Utilisateur non trouvé"
     
     username = user.username
     db.session.delete(user)
@@ -156,18 +165,16 @@ def admin_delete_user(user_id):
 @app.route('/admin/user/add_money/<int:user_id>', methods=['POST'])
 @login_required
 def admin_add_money(user_id):
-    if current_user.username != 'archibogue88':
-        return jsonify({'error': 'Accès refusé'}), 403
+    # ASSERTIONS
+    assert current_user.username == 'archibogue88', "Accès refusé"
     
     data = request.json
     amount = data.get('amount', 0)
     
-    if amount <= 0:
-        return jsonify({'error': 'Montant invalide'}), 400
+    assert amount > 0, "Montant invalide"
     
     user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'Utilisateur non trouvé'}), 404
+    assert user, "Utilisateur non trouvé"
     
     user.money += int(amount)
     db.session.commit()
@@ -177,8 +184,9 @@ def admin_add_money(user_id):
         'message': f'{amount}$ ajoutés à {user.username}',
         'new_money': user.money
     })
+
 # ============================================
-# STATISTIQUES ET LEADERBOARD (CORRIGÉ)
+# STATISTIQUES ET LEADERBOARD
 # ============================================
 
 @app.route('/api/get_stats')
@@ -217,7 +225,6 @@ def user_achievements():
     
     return jsonify(achievements_data)
 
-# CORRECTION DU LEADERBOARD - Route manquante !
 @app.route('/api/leaderboard')
 @login_required
 def leaderboard():
@@ -386,40 +393,36 @@ def clicker_upgrade():
     
     if upgrade_type == 'click':
         cost = clicker.click_cost
-        if current_user.money >= cost:
-            current_user.remove_money(cost)
-            clicker.click_power += 1
-            clicker.click_level += 1
-            clicker.click_cost = int(cost * 1.8)
-        else:
-            return jsonify({'error': 'Pas assez d\'argent'}), 400
+        assert current_user.money >= cost, "Pas assez d'argent"
+        
+        current_user.remove_money(cost)
+        clicker.click_power += 1
+        clicker.click_level += 1
+        clicker.click_cost = int(cost * 1.8)
     
     elif upgrade_type == 'auto':
         cost = clicker.auto_cost
-        if current_user.money >= cost:
-            current_user.remove_money(cost)
-            clicker.auto_level += 1
-            clicker.auto_cost = int(cost * 2.2)
-        else:
-            return jsonify({'error': 'Pas assez d\'argent'}), 400
+        assert current_user.money >= cost, "Pas assez d'argent"
+        
+        current_user.remove_money(cost)
+        clicker.auto_level += 1
+        clicker.auto_cost = int(cost * 2.2)
     
     elif upgrade_type == 'factory':
         cost = clicker.factory_cost
-        if current_user.money >= cost:
-            current_user.remove_money(cost)
-            clicker.factory_level += 1
-            clicker.factory_cost = int(cost * 2.5)
-        else:
-            return jsonify({'error': 'Pas assez d\'argent'}), 400
+        assert current_user.money >= cost, "Pas assez d'argent"
+        
+        current_user.remove_money(cost)
+        clicker.factory_level += 1
+        clicker.factory_cost = int(cost * 2.5)
     
     elif upgrade_type == 'bank':
         cost = clicker.bank_cost
-        if current_user.money >= cost:
-            current_user.remove_money(cost)
-            clicker.bank_level += 1
-            clicker.bank_cost = int(cost * 3.0)
-        else:
-            return jsonify({'error': 'Pas assez d\'argent'}), 400
+        assert current_user.money >= cost, "Pas assez d'argent"
+        
+        current_user.remove_money(cost)
+        clicker.bank_level += 1
+        clicker.bank_cost = int(cost * 3.0)
     
     db.session.commit()
     
@@ -451,10 +454,10 @@ def clicker_passive():
     
     return jsonify({'money': current_user.money})
 
-
 # ============================================
 # BLACKJACK
 # ============================================
+
 def create_deck():
     """Crée un jeu de 52 cartes"""
     suits = ['♥', '♦', '♣', '♠']
@@ -463,6 +466,8 @@ def create_deck():
 
 def card_value(card):
     """Retourne la valeur d'une carte"""
+    assert 'value' in card, "La carte doit avoir une valeur"
+    
     if card['value'] in ['J', 'Q', 'K']:
         return 10
     elif card['value'] == 'A':
@@ -472,6 +477,9 @@ def card_value(card):
 
 def hand_total(hand):
     """Calcule le total d'une main"""
+    assert isinstance(hand, list), "La main doit être une liste"
+    assert len(hand) > 0, "La main ne peut pas être vide"
+    
     total = sum(card_value(card) for card in hand)
     aces = sum(1 for card in hand if card['value'] == 'A')
     
@@ -488,12 +496,9 @@ def blackjack_start():
     data = request.json
     bet = int(data.get('bet', 50))
     
-    # Validations
-    if bet < 10:
-        return jsonify({'error': 'Mise minimum : 10$'}), 400
-    
-    if bet > current_user.money:
-        return jsonify({'error': 'Mise trop élevée'}), 400
+    # ASSERTIONS
+    assert bet >= 10, "Mise minimum : 10$"
+    assert bet <= current_user.money, "Mise trop élevée"
     
     # Retirer l'argent
     current_user.remove_money(bet)
@@ -541,8 +546,7 @@ def blackjack_start():
 def blackjack_hit():
     """Tire une carte supplémentaire"""
     game = session.get('blackjack')
-    if not game:
-        return jsonify({'error': 'Pas de partie en cours'}), 400
+    assert game, "Pas de partie en cours"
     
     # Tirer une carte
     card = game['deck'].pop()
@@ -569,8 +573,7 @@ def blackjack_hit():
 def blackjack_stand():
     """Se coucher et terminer la partie"""
     game = session.get('blackjack')
-    if not game:
-        return jsonify({'error': 'Pas de partie en cours'}), 400
+    assert game, "Pas de partie en cours"
     
     # ENREGISTRER L'ACTION STAND DANS LA PILE
     player_total = hand_total(game['player_hand'])
@@ -657,11 +660,9 @@ def roulette_spin():
     mode = data.get('mode', 'color')
     choice = data.get('choice')
     
-    if bet < 10:
-        return jsonify({'error': 'Mise minimum : 10$'}), 400
-    
-    if bet > current_user.money:
-        return jsonify({'error': 'Mise trop élevée'}), 400
+    # ASSERTIONS
+    assert bet >= 10, "Mise minimum : 10$"
+    assert bet <= current_user.money, "Mise trop élevée"
     
     current_user.remove_money(bet)
     
@@ -715,6 +716,7 @@ def roulette_spin():
         'stats': get_global_stats(),
         'new_achievements': new_achievements
     })
+
 # ============================================
 # MINEBOMB
 # ============================================
@@ -727,14 +729,10 @@ def minebomb_start():
     bet = int(data.get('bet', 50))
     bombs = int(data.get('bombs', 5))
     
-    if bet < 10:
-        return jsonify({'error': 'Mise minimum : 10$'}), 400
-    
-    if bet > current_user.money:
-        return jsonify({'error': 'Mise trop élevée'}), 400
-    
-    if bombs < 3 or bombs > 10:
-        return jsonify({'error': 'Entre 3 et 10 bombes'}), 400
+    # ASSERTIONS
+    assert bet >= 10, "Mise minimum : 10$"
+    assert bet <= current_user.money, "Mise trop élevée"
+    assert 3 <= bombs <= 10, "Entre 3 et 10 bombes"
     
     current_user.remove_money(bet)
     
@@ -760,8 +758,7 @@ def minebomb_reveal():
     index = int(data.get('index'))
     
     game = session.get('minebomb')
-    if not game:
-        return jsonify({'error': 'Pas de partie en cours'}), 400
+    assert game, "Pas de partie en cours"
     
     cell_type = game['grid'][index]
     game['revealed'].append(index)
@@ -813,10 +810,7 @@ def minebomb_reveal():
 def minebomb_cashout():
     """Encaisser les gains"""
     game = session.get('minebomb')
-    if not game:
-        return jsonify({
-            'error': 'Pas de partie en cours. La session a peut-être expiré. Veuillez recommencer.'
-        }), 400
+    assert game, "Pas de partie en cours. La session a peut-être expiré. Veuillez recommencer."
     
     diamonds = game['diamonds_found']
     multiplier = 1 + (diamonds * 0.3 * (game['bombs'] / 5))
@@ -850,7 +844,7 @@ def minebomb_cashout():
     })
 
 # ============================================
-# SLOTS - Correction français
+# SLOTS 
 # ============================================
 
 @app.route('/api/slots/spin', methods=['POST'])
@@ -860,11 +854,9 @@ def slots_spin():
     data = request.json
     bet = int(data.get('bet', 50))
     
-    if bet < 10:
-        return jsonify({'error': 'Mise minimum : 10$'}), 400
-    
-    if bet > current_user.money:
-        return jsonify({'error': 'Mise trop élevée'}), 400
+    # ASSERTIONS
+    assert bet >= 10, "Mise minimum : 10$"
+    assert bet <= current_user.money, "Mise trop élevée"
     
     current_user.remove_money(bet)
     

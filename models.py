@@ -31,18 +31,15 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
     
     def add_money(self, amount):
-        """Ajoute de l'argent (avec validation)"""
-        if amount < 0:
-            raise ValueError("Le montant ne peut pas être négatif")
+        """Ajoute de l'argent (avec assertion)"""
+        assert amount >= 0, "Le montant ne peut pas être négatif"
         self.money += amount
         db.session.commit()
     
     def remove_money(self, amount):
-        """Retire de l'argent (avec validation)"""
-        if amount < 0:
-            raise ValueError("Le montant ne peut pas être négatif")
-        if self.money < amount:
-            raise ValueError("Fonds insuffisants")
+        """Retire de l'argent (avec assertion)"""
+        assert amount >= 0, "Le montant ne peut pas être négatif"
+        assert self.money >= amount, "Fonds insuffisants"
         self.money -= amount
         db.session.commit()
     
@@ -83,7 +80,7 @@ class ClickerData(db.Model):
     factory_level = db.Column(db.Integer, default=0)
     bank_level = db.Column(db.Integer, default=0)
     
-    # NOUVEAUX COÛTS - Plus élevés et progressifs
+    # COÛTS - Plus élevés et progressifs
     click_cost = db.Column(db.Integer, default=25)
     auto_cost = db.Column(db.Integer, default=150)
     factory_cost = db.Column(db.Integer, default=800)
@@ -94,7 +91,11 @@ class ClickerData(db.Model):
     
     @property
     def passive_income(self):
-        """Calcule le revenu passif - VERSION RÉÉQUILIBRÉE"""
+        """Calcule le revenu passif - VERSION RÉÉQUILIBRÉE avec ASSERTIONS"""
+        assert self.auto_level >= 0, "Le niveau auto ne peut pas être négatif"
+        assert self.factory_level >= 0, "Le niveau factory ne peut pas être négatif"
+        assert self.bank_level >= 0, "Le niveau bank ne peut pas être négatif"
+        
         auto_income = self.auto_level * 0.5
         factory_income = self.factory_level * 2
         bank_income = self.bank_level * 8
@@ -157,6 +158,13 @@ class GameAction:
     Utilisée pour l'historique avec une PILE (Stack)
     """
     def __init__(self, action_type, card=None, total=0, details=None):
+        # ASSERTIONS pour valider les paramètres
+        assert isinstance(action_type, str), "Le type d'action doit être une chaîne de caractères"
+        assert action_type in ['hit', 'stand', 'start', 'bet', 'deal_player', 'deal_dealer', 'dealer_hit', 'end'], \
+            "Type d'action invalide"
+        assert isinstance(total, (int, float)), "Le total doit être un nombre"
+        assert total >= 0, "Le total ne peut pas être négatif"
+        
         self.action_type = action_type  # 'hit', 'stand', 'start', 'bet'
         self.card = card  # Carte tirée (pour BlackJack)
         self.total = total  # Total de la main
@@ -186,18 +194,20 @@ class ActionStack:
     Permet d'annuler la dernière action (UNDO)
     """
     def __init__(self, max_size=50):
+        assert isinstance(max_size, int), "La taille maximale doit être un entier"
+        assert max_size > 0, "La taille maximale doit être positive"
+        
         self.stack = []  # PILE
         self.max_size = max_size
     
     def push(self, action):
         """Empiler une action (ajouter au sommet)"""
-        if isinstance(action, GameAction):
-            self.stack.append(action)
-            # Limiter la taille pour éviter surcharge mémoire
-            if len(self.stack) > self.max_size:
-                self.stack.pop(0)  # Retirer la plus ancienne
-        else:
-            raise TypeError("L'action doit être une instance de GameAction")
+        assert isinstance(action, GameAction), "L'action doit être une instance de GameAction"
+        
+        self.stack.append(action)
+        # Limiter la taille pour éviter surcharge mémoire
+        if len(self.stack) > self.max_size:
+            self.stack.pop(0)  # Retirer la plus ancienne
     
     def pop(self):
         """Dépiler (retirer et retourner la dernière action)"""
@@ -230,6 +240,7 @@ class ActionStack:
     def __repr__(self):
         return f'<ActionStack size={self.size()}>'
 
+
 class GameManager:
     """
     Classe de gestion des jeux (POO)
@@ -238,10 +249,17 @@ class GameManager:
     def __init__(self):
         self.action_history = ActionStack()  # PILE pour l'historique
         self.active_games = {}               # Dictionnaire des parties actives
-        # SUPPRIMÉ : self.pending_games = GameQueue()
         
     def start_game(self, user_id, game_type, bet):
         """Démarre une nouvelle partie"""
+        # ASSERTIONS
+        assert isinstance(user_id, int), "L'ID utilisateur doit être un entier"
+        assert user_id > 0, "L'ID utilisateur doit être positif"
+        assert isinstance(game_type, str), "Le type de jeu doit être une chaîne"
+        assert game_type in ['blackjack', 'roulette', 'minebomb', 'slots'], "Type de jeu invalide"
+        assert isinstance(bet, (int, float)), "La mise doit être un nombre"
+        assert bet >= 10, "Mise minimum : 10$"
+        
         game_data = {
             'user_id': user_id,
             'game_type': game_type,
@@ -259,6 +277,8 @@ class GameManager:
     
     def end_game(self, user_id):
         """Termine une partie"""
+        assert isinstance(user_id, int), "L'ID utilisateur doit être un entier"
+        
         if user_id in self.active_games:
             game_data = self.active_games.pop(user_id)
             action = GameAction('end', details={'game_type': game_data['game_type']})
@@ -288,5 +308,4 @@ class GameManager:
         return f'<GameManager active={len(self.active_games)} history={self.action_history.size()}>'
 
 
-# Instance globale du gestionnaire de jeux
 game_manager = GameManager()

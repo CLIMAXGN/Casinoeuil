@@ -171,7 +171,15 @@ http://localhost:5000
 - Classement mondial des meilleurs joueurs
 - Historique des 20 dernières parties
 - Page de profil avec données personnelles
-- Système d'achievements
+- Système d'achievements avec 5 succès débloquables :
+
+| Nom | Description | Récompense | Condition |
+|-----|-------------|------------|-----------|
+| 🎮 **Premier pas** | Joue ta première partie | 100$ | Jouer 1 partie |
+| 🏆 **Gagnant** | Gagne 10 parties | 500$ | Remporter 10 victoires |
+| 💰 **Millionnaire** | Atteins 10,000$ | 2,000$ | Avoir un solde ≥ 10,000$ |
+| 🔥 **Série de victoires** | Gagne 5 parties d'affilée | 1,500$ | 5 victoires consécutives |
+| 🍀 **Chanceux** | Gagne avec multiplicateur ×50+ | 1,000$ | Gain avec multiplicateur ≥ 50 |
 
 #### Pour les Administrateurs
 
@@ -205,6 +213,19 @@ http://localhost:5000
 2. **Achetez des améliorations** dans le panneau de droite
 
 > Les prix augmentent après chaque achat selon un multiplicateur unique par amélioration.
+
+#### 📊 Détails des Améliorations
+
+| Amélioration | Nom | Effet | Coût initial | Multiplicateur de coût |
+|--------------|-----|-------|--------------|------------------------|
+| **Click** | 💪 Archibogue Power | +1 $/clic | 25$ | ×1.8 |
+| **Auto** | 🤖 'Pataphysique Autoclicker | +0.5 $/s passif | 150$ | ×2.2 |
+| **Factory** | 🏭 Usine à ₿itcoin | +2 $/s passif | 800$ | ×2.5 |
+| **Bank** | 🎨 NFT | +8 $/s passif | 5000$ | ×3.0 |
+
+**Formule du coût progressif :**
+- Après chaque achat, le coût augmente selon le multiplicateur
+- Exemple : Click coûte 25$, puis 45$, puis 81$, etc.
 
 ### Blackjack
 
@@ -316,7 +337,7 @@ Casinoeuil/
 | `models.py` | ~400 | Modèles DB (User, ClickerData, GameHistory), POO, structures PILE |
 | `script.js` | ~700 | Interactions client, appels asynchrones |
 | `styles.css` | ~900 | Design responsive, animations, thème |
-| `index.html` | ~400 | Structure HTML, interfaces jeux |
+| `index.html` | ~600 | Structure HTML, interfaces jeux |
 | `X.html` | ~ | Toutes les autres pages HTML |
 
 ---
