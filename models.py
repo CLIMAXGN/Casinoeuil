@@ -17,7 +17,6 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relations
     clicker_data = db.relationship('ClickerData', backref='user', uselist=False, cascade='all, delete-orphan')
     game_history = db.relationship('GameHistory', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     achievements = db.relationship('Achievement', secondary='user_achievements', backref='users')
@@ -188,11 +187,6 @@ class GameAction:
 
 
 class ActionStack:
-    """
-    PILE (Stack - LIFO: Last In First Out)
-    Structure de données pour gérer l'historique des actions
-    Permet d'annuler la dernière action (UNDO)
-    """
     def __init__(self, max_size=50):
         assert isinstance(max_size, int), "La taille maximale doit être un entier"
         assert max_size > 0, "La taille maximale doit être positive"
@@ -242,10 +236,6 @@ class ActionStack:
 
 
 class GameManager:
-    """
-    Classe de gestion des jeux (POO)
-    Utilise la structure PILE (ActionStack) pour l'historique
-    """
     def __init__(self):
         self.action_history = ActionStack()  # PILE pour l'historique
         self.active_games = {}               # Dictionnaire des parties actives
