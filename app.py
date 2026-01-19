@@ -7,7 +7,7 @@ import json
 
 # Créer l'app Flask AVANT d'importer les modèles
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-very-secret-2024')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fortnite_en_2020_ct_quelque_chose')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///casinoeuil.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
