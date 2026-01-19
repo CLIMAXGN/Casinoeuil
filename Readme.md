@@ -2,10 +2,10 @@
   <img src="https://github.com/user-attachments/assets/d29729d4-da3d-4b22-a951-cbc7fc0d02ca" width="100%" />
 </p>
 
-<h1 align="center">The ONLY Casino Where You Can't Lose Money</h1>
+<h1 align="center">Le SEUL casino dans lequel vous ne pouvez pas perdre d'argent.</h1>
 
 <p align="center">
-  <strong>Bienvenue dans le casino le plus injuste jamais créé — car les probabilités sont TOUJOURS de votre côté.</strong>
+  <strong>BIENVENUE DANS LE CASINOEUIL.</strong>
 </p>
 
 ---
