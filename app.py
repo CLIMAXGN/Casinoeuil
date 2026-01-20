@@ -492,7 +492,7 @@ def hand_total(hand):
 @app.route('/api/blackjack/start', methods=['POST'])
 @login_required
 def blackjack_start():
-    """Démarre une partie de Blackjack"""
+    """Démarre une partie de Blackjack avec deck persistant"""
     data = request.json
     bet = int(data.get('bet', 50))
     
@@ -503,31 +503,59 @@ def blackjack_start():
     # Retirer l'argent
     current_user.remove_money(bet)
     
-    # Créer 1-8 decks de cartes (comme dans les vrais casinos)
-    num_decks = random.randint(1, 8)
-    deck = create_deck() * num_decks
-    random.shuffle(deck)
+    # AMÉLIORATION : Gestion persistante du deck
+    blackjack_session = session.get('blackjack_session', {})
+    
+    # Si pas de session active OU moins de 20% du deck restant, créer nouveau deck
+    if not blackjack_session or len(blackjack_session.get('deck', [])) < (blackjack_session.get('total_cards', 0) * 0.2):
+        num_decks = 6  # Standard casino (peut être 4, 6 ou 8)
+        deck = create_deck() * num_decks
+        random.shuffle(deck)
+        
+        blackjack_session = {
+            'deck': deck,
+            'num_decks': num_decks,
+            'total_cards': len(deck),
+            'cards_dealt': 0
+        }
+    else:
+        # Utiliser le deck existant
+        deck = blackjack_session['deck']
+        num_decks = blackjack_session['num_decks']
     
     # Distribuer 2 cartes au joueur et au croupier
     player_hand = [deck.pop(), deck.pop()]
     dealer_hand = [deck.pop(), deck.pop()]
     
+    # Mettre à jour le nombre de cartes distribuées
+    blackjack_session['cards_dealt'] += 4
+    blackjack_session['deck'] = deck
+    
     # Calculer les totaux
     player_total = hand_total(player_hand)
     dealer_total = hand_total(dealer_hand)
     
-    # Stocker la partie en session
+    # Stocker la partie en cours
     session['blackjack'] = {
         'bet': bet,
-        'deck': deck,
         'player_hand': player_hand,
-        'dealer_hand': dealer_hand,
-        'num_decks': num_decks
+        'dealer_hand': dealer_hand
     }
+    
+    # Stocker la session de deck
+    session['blackjack_session'] = blackjack_session
+    
+    # Calculer combien de cartes restent
+    cards_remaining = len(deck)
+    deck_percentage = (cards_remaining / blackjack_session['total_cards']) * 100
     
     # ENREGISTRER DANS LA PILE (POO)
     game_manager.start_game(current_user.id, 'blackjack', bet)
-    game_manager.record_action('start', details={'bet': bet, 'num_decks': num_decks})
+    game_manager.record_action('start', details={
+        'bet': bet, 
+        'num_decks': num_decks,
+        'cards_remaining': cards_remaining
+    })
     game_manager.record_action('deal_player', card=player_hand[0], total=card_value(player_hand[0]))
     game_manager.record_action('deal_player', card=player_hand[1], total=player_total)
     game_manager.record_action('deal_dealer', card=dealer_hand[0], total=card_value(dealer_hand[0]))
@@ -538,8 +566,13 @@ def blackjack_start():
         'dealer_hand': dealer_hand,
         'player_total': player_total,
         'dealer_total': dealer_total,
-        'num_decks': num_decks
+        'num_decks': num_decks,
+        'cards_remaining': cards_remaining,
+        'deck_percentage': round(deck_percentage, 1)
     })
+
+
+# Modifie aussi hit() et stand() pour utiliser le deck de session :
 
 @app.route('/api/blackjack/hit', methods=['POST'])
 @login_required
@@ -548,13 +581,21 @@ def blackjack_hit():
     game = session.get('blackjack')
     assert game, "Pas de partie en cours"
     
+    blackjack_session = session.get('blackjack_session', {})
+    deck = blackjack_session.get('deck', [])
+    
+    assert len(deck) > 0, "Plus de cartes dans le deck"
+    
     # Tirer une carte
-    card = game['deck'].pop()
+    card = deck.pop()
     game['player_hand'].append(card)
     player_total = hand_total(game['player_hand'])
     
-    # Mettre à jour la session
+    # Mettre à jour
+    blackjack_session['deck'] = deck
+    blackjack_session['cards_dealt'] += 1
     session['blackjack'] = game
+    session['blackjack_session'] = blackjack_session
     
     # ENREGISTRER DANS LA PILE
     game_manager.record_action('hit', card=card, total=player_total)
@@ -565,32 +606,41 @@ def blackjack_hit():
     return jsonify({
         'player_hand': game['player_hand'],
         'player_total': player_total,
-        'busted': busted
+        'busted': busted,
+        'cards_remaining': len(deck)
     })
+
 
 @app.route('/api/blackjack/stand', methods=['POST'])
 @login_required
 def blackjack_stand():
-    """Se coucher et terminer la partie"""
     game = session.get('blackjack')
     assert game, "Pas de partie en cours"
     
-    # ENREGISTRER L'ACTION STAND DANS LA PILE
+    blackjack_session = session.get('blackjack_session', {})
+    deck = blackjack_session.get('deck', [])
+    
+    #ENREGISTRER L'ACTION STAND
     player_total = hand_total(game['player_hand'])
     game_manager.record_action('stand', total=player_total)
     
-    # Dealer tire jusqu'à 17
+    #Dealer tire jusqu'à 17
     while hand_total(game['dealer_hand']) < 17:
-        card = game['deck'].pop()
+        card = deck.pop()
         game['dealer_hand'].append(card)
+        blackjack_session['cards_dealt'] += 1
         # ENREGISTRER CHAQUE CARTE DU DEALER
         game_manager.record_action('dealer_hit', card=card, total=hand_total(game['dealer_hand']))
+    
+    #Mettre à jour le deck
+    blackjack_session['deck'] = deck
+    session['blackjack_session'] = blackjack_session
     
     player_total = hand_total(game['player_hand'])
     dealer_total = hand_total(game['dealer_hand'])
     bet = game['bet']
     
-    # Déterminer le résultat
+    #Déterminer le résultat
     if player_total > 21:
         result = 'lose'
         profit = -bet
@@ -608,13 +658,13 @@ def blackjack_stand():
         profit = 0
         result_message = 'Égalité !'
     
-    # Mettre à jour l'argent
+    #Mettre à jour l'argent
     if result == 'win':
         current_user.add_money(bet * 2)
     elif result == 'draw':
         current_user.add_money(bet)
     
-    # Sauvegarder l'historique dans la DB
+    #Sauvegarder l'historique
     history = GameHistory(
         user_id=current_user.id,
         game_type='blackjack',
@@ -627,13 +677,18 @@ def blackjack_stand():
     db.session.add(history)
     db.session.commit()
     
-    # TERMINER LA PARTIE DANS LE GAME MANAGER
+    # TERMINER LA PARTIE
     game_manager.end_game(current_user.id)
     
-    # Nettoyer la session
+    # Nettoyer la partie (mais PAS la session de deck)
     session.pop('blackjack', None)
 
     new_achievements = check_and_unlock_achievements(current_user)
+    
+    # Info sur le deck pour affichage
+    cards_remaining = len(deck)
+    deck_percentage = (cards_remaining / blackjack_session['total_cards']) * 100
+    will_shuffle = deck_percentage < 20  # Si moins de 20%, on mélangera au prochain coup
     
     return jsonify({
         'result': result,
@@ -644,7 +699,10 @@ def blackjack_stand():
         'dealer_total': dealer_total,
         'player_total': player_total,
         'stats': get_global_stats(),
-        'new_achievements': new_achievements
+        'new_achievements': new_achievements,
+        'cards_remaining': cards_remaining,
+        'deck_percentage': round(deck_percentage, 1),
+        'will_shuffle': will_shuffle
     })
 
 # ============================================
