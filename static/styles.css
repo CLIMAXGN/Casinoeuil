@@ -269,6 +269,27 @@ body {
     margin: 0 auto;
 }
 
+@media (max-width: 768px) {
+    .clicker-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .menu-grid {
+        grid-template-columns: 1fr;
+        max-width: 400px;
+    }
+    
+    .game-card {
+        min-height: auto;
+        padding: 24px 20px;
+    }
+    
+    .game-logo {
+        width: 180px;
+        height: 180px;
+    }
+}
+
 .click-area {
     display: flex;
     flex-direction: column;
