@@ -8,8 +8,21 @@ import json
 # Créer l'app Flask AVANT d'importer les modèles
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fortnite_en_2020_ct_quelque_chose')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///casinoeuil.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Si on est en production avec PostgreSQL
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+else:
+    #SEULEMENT EN LOCAL
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///casinoeuil.db'
+
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+}app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 from models import db, User, ClickerData, GameHistory, Achievement, GameManager
 
