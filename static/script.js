@@ -496,7 +496,13 @@ async function spinRoulette() {
     }
     
     const wheel = document.getElementById('rouletteWheel');
+    const resultCenter = document.getElementById('rouletteResult');
     wheel.classList.add('spinning');
+    
+    // Réinitialiser le centre
+    resultCenter.textContent = '?';
+    resultCenter.style.background = '#1e293b';
+    resultCenter.style.color = 'white';
     
     try {
         const response = await fetch('/api/roulette/spin', {
@@ -516,7 +522,20 @@ async function spinRoulette() {
         
         setTimeout(() => {
             wheel.classList.remove('spinning');
-            document.getElementById('rouletteResult').textContent = data.number;
+            
+            // Afficher le numéro avec la couleur correspondante
+            resultCenter.textContent = data.number;
+            
+            if (data.color === 'Green') {
+                resultCenter.style.background = '#22c55e';
+                resultCenter.style.color = 'white';
+            } else if (data.color === 'Red') {
+                resultCenter.style.background = '#ef4444';
+                resultCenter.style.color = 'white';
+            } else { // Black
+                resultCenter.style.background = '#1f2937';
+                resultCenter.style.color = 'white';
+            }
             
             const msgDiv = document.getElementById('rouletteMessage');
             msgDiv.className = 'message';
