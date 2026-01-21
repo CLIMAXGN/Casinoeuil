@@ -22,7 +22,8 @@ else:
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
     'pool_recycle': 300,
-}app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+}
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 from models import db, User, ClickerData, GameHistory, Achievement, GameManager
 
