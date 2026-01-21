@@ -1030,6 +1030,42 @@ def init_db():
             db.session.commit()
             print("Achievements créés")
 
+
+# Ajoute cet endpoint dans app.py
+
+@app.route('/api/user_money_history')
+@login_required
+def user_money_history():
+    """Récupère l'évolution de l'argent sur les 10 dernières parties"""
+    
+    # Récupérer les 10 dernières parties
+    games = GameHistory.query.filter_by(user_id=current_user.id)\
+        .order_by(GameHistory.played_at.asc())\
+        .limit(10)\
+        .all()
+    
+    if not games:
+        return jsonify([])
+    
+    # Calculer l'argent après chaque partie
+    # On part de l'argent actuel et on remonte
+    current_balance = current_user.money
+    history_points = []
+    
+    # On inverse pour partir de la fin
+    for i, game in enumerate(reversed(games)):
+        history_points.insert(0, {
+            'game_number': len(games) - i,
+            'money': current_balance,
+            'game_type': game.game_type,
+            'profit': game.profit,
+            'date': game.played_at.strftime('%H:%M')
+        })
+        # On retire le profit pour avoir l'argent d'avant
+        current_balance -= game.profit
+    
+    return jsonify(history_points)
+
 @app.route('/health')
 def health():
     return {'status': 'ok'}, 200
