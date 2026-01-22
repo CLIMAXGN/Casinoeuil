@@ -956,3 +956,648 @@ h1, h2, h3, h4, h5, h6 {
 .win-rate-low {
     color: #ef4444;
 }
+
+/* 
+   RESPONSIVE MOBILE - À ajouter à la fin de styles.css
+   Optimisation pour téléphones et tablettes
+*/
+
+/* Tablettes (iPad, etc.) */
+@media (max-width: 1024px) {
+    .container {
+        padding: 30px 15px;
+    }
+
+    .menu-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .game-card {
+        min-height: 340px;
+    }
+
+    .game-logo {
+        width: 180px;
+        height: 180px;
+    }
+
+    .clicker-container {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .click-button {
+        width: 250px;
+        height: 250px;
+    }
+}
+
+/* Smartphones en paysage et petites tablettes */
+@media (max-width: 768px) {
+    /* Header adapté */
+    .header {
+        padding: 15px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .logo img {
+        width: 80px;
+        height: auto;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .money-display,
+    .income-display,
+    .reset-btn {
+        padding: 10px 16px;
+        font-size: 14px;
+        min-height: 40px;
+    }
+
+    /* Menu principal */
+    .menu-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .game-card {
+        padding: 20px 16px;
+        min-height: 300px;
+    }
+
+    .game-logo {
+        width: 150px;
+        height: 150px;
+    }
+
+    .game-title {
+        font-size: 18px;
+    }
+
+    .game-desc {
+        font-size: 13px;
+    }
+
+    /* Statistiques */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 12px;
+    }
+
+    .stat-value {
+        font-size: 20px;
+    }
+
+    /* Clicker */
+    .clicker-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .click-button {
+        width: 220px;
+        height: 220px;
+    }
+
+    .click-value {
+        font-size: 28px;
+    }
+
+    .click-icon {
+        font-size: 60px;
+    }
+
+    .click-text {
+        font-size: 20px;
+    }
+
+    .upgrade-card {
+        padding: 14px;
+    }
+
+    /* BlackJack */
+    .cards {
+        gap: 8px;
+    }
+
+    .card {
+        width: 60px;
+        height: 85px;
+        font-size: 24px;
+    }
+
+    /* Roulette */
+    .roulette-wheel {
+        width: 300px;
+        height: 300px;
+    }
+
+    .roulette-center {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+
+    .color-btn {
+        width: 80px;
+        height: 80px;
+        font-size: 14px;
+    }
+
+    /* MineBomb */
+    .minebomb-grid {
+        max-width: 350px;
+        gap: 10px;
+    }
+
+    .mine-cell {
+        font-size: 24px;
+    }
+
+    .multiplier-display {
+        font-size: 32px;
+    }
+
+    /* Slots */
+    .slots-display {
+        gap: 16px;
+        padding: 24px;
+    }
+
+    .slot-reel {
+        width: 80px;
+        height: 80px;
+        font-size: 48px;
+    }
+
+    .paytable-row {
+        font-size: 14px;
+        padding: 6px;
+    }
+
+    /* Inputs et boutons */
+    .input-group input,
+    .input-group select {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        font-size: 15px;
+    }
+
+    /* Tables */
+    .leaderboard-table {
+        font-size: 13px;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 10px 12px;
+    }
+
+    /* Profil */
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 40px;
+    }
+
+    .profile-info h1 {
+        font-size: 24px;
+    }
+
+    .stats-overview {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .stat-card-large {
+        padding: 16px;
+    }
+
+    .stat-card-large .stat-value {
+        font-size: 24px;
+    }
+}
+
+/* Petits smartphones (iPhone SE, etc.) */
+@media (max-width: 480px) {
+    /* Header encore plus compact */
+    .header {
+        padding: 12px;
+    }
+
+    .logo img {
+        width: 60px;
+    }
+
+    .header-right {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .money-display,
+    .income-display {
+        width: 100%;
+        justify-content: center;
+        padding: 10px;
+        font-size: 16px;
+    }
+
+    .reset-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    /* Menu en colonne unique */
+    .menu-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .game-card {
+        min-height: 280px;
+        padding: 20px;
+    }
+
+    .game-logo {
+        width: 140px;
+        height: 140px;
+    }
+
+    .game-title {
+        font-size: 20px;
+    }
+
+    /* Message de bienvenue */
+    .welcome-message {
+        font-size: 14px;
+        padding: 12px 16px;
+    }
+
+    /* Statistiques en une colonne */
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-overview {
+        grid-template-columns: 1fr;
+    }
+
+    /* Clicker plus petit */
+    .click-button {
+        width: 200px;
+        height: 200px;
+    }
+
+    .click-value {
+        font-size: 24px;
+    }
+
+    .click-icon img {
+        width: 150px !important;
+    }
+
+    .click-text {
+        font-size: 18px;
+    }
+
+    /* Upgrades */
+    .upgrades-section {
+        padding: 16px;
+    }
+
+    .upgrade-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .upgrade-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .upgrade-btn {
+        width: 100%;
+    }
+
+    /* BlackJack */
+    .blackjack-table {
+        padding: 16px;
+    }
+
+    .card {
+        width: 50px;
+        height: 70px;
+        font-size: 20px;
+    }
+
+    /* Roulette */
+    .roulette-wheel {
+        width: 250px;
+        height: 250px;
+    }
+
+    .color-buttons {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .color-btn {
+        width: 100%;
+        height: 60px;
+        border-radius: 12px;
+    }
+
+    /* MineBomb */
+    .minebomb-grid {
+        max-width: 280px;
+        gap: 8px;
+    }
+
+    .mine-cell {
+        font-size: 20px;
+    }
+
+    .mb-game-info {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .multiplier-display {
+        font-size: 28px;
+    }
+
+    /* Slots */
+    .slots-display {
+        gap: 12px;
+        padding: 20px;
+    }
+
+    .slot-reel {
+        width: 70px;
+        height: 70px;
+        font-size: 40px;
+    }
+
+    .paytable-row {
+        font-size: 13px;
+    }
+
+    /* Messages */
+    .message {
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    /* Boutons */
+    .btn {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+
+    .back-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    /* Tables - scroll horizontal */
+    .leaderboard-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .leaderboard-table {
+        min-width: 500px;
+        font-size: 12px;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        padding: 8px 10px;
+    }
+
+    /* Admin */
+    .admin-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .users-table {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 600px;
+    }
+
+    /* Profil */
+    .profile-container {
+        padding: 20px 15px;
+    }
+
+    .profile-header {
+        padding: 20px;
+    }
+
+    .profile-info h1 {
+        font-size: 22px;
+    }
+
+    .chart-container {
+        height: 220px;
+        padding: 10px;
+    }
+
+    .achievements-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Login/Register */
+    .login-container,
+    .register-container {
+        padding: 32px 20px;
+    }
+
+    .logo h1 {
+        font-size: 28px;
+    }
+
+    .features {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome-bonus .bonus-amount {
+        font-size: 32px;
+    }
+}
+
+/* Très petits écrans (old phones) */
+@media (max-width: 360px) {
+    .container {
+        padding: 20px 10px;
+    }
+
+    .game-card {
+        padding: 16px;
+    }
+
+    .game-logo {
+        width: 120px;
+        height: 120px;
+    }
+
+    .click-button {
+        width: 180px;
+        height: 180px;
+    }
+
+    .roulette-wheel {
+        width: 220px;
+        height: 220px;
+    }
+
+    .minebomb-grid {
+        max-width: 250px;
+    }
+
+    .slot-reel {
+        width: 60px;
+        height: 60px;
+        font-size: 36px;
+    }
+}
+
+/* Mode paysage sur mobile */
+@media (max-height: 600px) and (orientation: landscape) {
+    .header {
+        padding: 10px;
+    }
+
+    .game-card {
+        min-height: auto;
+        padding: 16px;
+    }
+
+    .game-logo {
+        width: 100px;
+        height: 100px;
+    }
+
+    .click-button {
+        width: 180px;
+        height: 180px;
+    }
+
+    .roulette-wheel {
+        width: 250px;
+        height: 250px;
+    }
+
+    .profile-header {
+        padding: 16px;
+    }
+}
+
+/* Touch improvements pour mobile */
+@media (hover: none) and (pointer: coarse) {
+    /* Augmenter les zones tactiles */
+    .btn,
+    .reset-btn,
+    .upgrade-btn,
+    .action-btn {
+        min-height: 44px;
+        padding: 12px 20px;
+    }
+
+    .mine-cell {
+        min-height: 44px;
+    }
+
+    .color-btn {
+        min-height: 60px;
+    }
+
+    /* Désactiver les effets hover sur mobile */
+    .game-card:hover,
+    .btn:hover,
+    .mine-cell:hover {
+        transform: none;
+    }
+
+    /* Meilleur feedback tactile */
+    .btn:active,
+    .reset-btn:active,
+    .upgrade-btn:active {
+        transform: scale(0.95);
+    }
+
+    .game-card:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Amélioration du scroll sur mobile */
+@media (max-width: 768px) {
+    body {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Scroll doux pour les tables */
+    .leaderboard-container,
+    .users-table {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+}
+
+/* Notifications adaptées mobile */
+@media (max-width: 480px) {
+    .notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+}
+
+/* Modal adapté mobile */
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        padding: 24px;
+        margin: 0 10px;
+    }
+
+    .modal-header {
+        font-size: 20px;
+    }
+
+    .modal-input {
+        padding: 10px;
+        font-size: 16px;
+    }
+}
