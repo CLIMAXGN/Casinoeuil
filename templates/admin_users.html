@@ -321,6 +321,17 @@
     <script>
         let currentUserId = null;
 
+         function formatMoney(amount) {
+        if (amount >= 1000000000) {
+            return (amount / 1000000000).toFixed(1) + 'B';
+        } else if (amount >= 1000000) {
+            return (amount / 1000000).toFixed(1) + 'M';
+        } else if (amount >= 1000) {
+            return (amount / 1000).toFixed(1) + 'K';
+        }
+        return amount.toString();
+    }
+
         function showNotification(message, type = 'success') {
             const notif = document.getElementById('notification');
             notif.textContent = message;
@@ -341,29 +352,30 @@
             document.getElementById('addMoneyModal').classList.add('active');
         }
 
+
         async function confirmAddMoney() {
-            const amount = document.getElementById('addMoneyInput').value;
+        const amount = document.getElementById('addMoneyInput').value;
+        
+        try {
+            const response = await fetch(`/admin/user/add_money/${currentUserId}`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({amount: parseInt(amount)})
+            });
             
-            try {
-                const response = await fetch(`/admin/user/add_money/${currentUserId}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({amount: parseInt(amount)})
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    document.getElementById(`money-${currentUserId}`).textContent = data.new_money + ' $';
-                    showNotification(data.message, 'success');
-                    closeModal('addMoneyModal');
-                } else {
-                    showNotification(data.error, 'error');
-                }
-            } catch (error) {
-                showNotification('Erreur de connexion', 'error');
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById(`money-${currentUserId}`).textContent = formatMoney(data.new_money) + ' $';
+                showNotification(data.message, 'success');
+                closeModal('addMoneyModal');
+            } else {
+                showNotification(data.error, 'error');
             }
+        } catch (error) {
+            showNotification('Erreur de connexion', 'error');
         }
+    }
 
         async function deleteUser(userId, username) {
             if (!confirm(`SUPPRIMER DÉFINITIVEMENT ${username} ?\n\nCette action est IRRÉVERSIBLE !`)) return;
@@ -394,6 +406,24 @@
                 event.target.classList.remove('active');
             }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+        // Formater tous les montants d'argent dans le tableau
+        document.querySelectorAll('[id^="money-"]').forEach(el => {
+            const amount = parseInt(el.textContent.replace(/[^0-9]/g, ''));
+            el.textContent = formatMoney(amount) + ' $';
+        });
+
+        // Formater les stats
+        const statsValues = document.querySelectorAll('.stat-box .value');
+        statsValues.forEach(el => {
+            if (el.textContent.includes('$')) {
+                const amount = parseInt(el.textContent.replace(/[^0-9]/g, ''));
+                el.textContent = formatMoney(amount) + ' $';
+            }
+        });
+    });
+
     </script>
 </body>
 </html>

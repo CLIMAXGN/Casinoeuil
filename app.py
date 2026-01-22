@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from models import db, User, ClickerData, GameHistory, Achievement, GameManager, Clan, clan_members
 from datetime import datetime, timedelta
 import random
 import os
@@ -300,7 +301,8 @@ def get_global_stats():
         'blackjack': get_game_stats('blackjack'),
         'roulette': get_game_stats('roulette'),
         'minebomb': get_game_stats('minebomb'),
-        'slots': get_game_stats('slots')
+        'slots': get_game_stats('slots'),
+        'plinko': get_game_stats('plinko')  # PLINKO
     }
 
 def check_and_unlock_achievements(user):
@@ -1065,6 +1067,529 @@ def user_money_history():
         current_balance -= game.profit
     
     return jsonify(history_points)
+
+
+    # ============================================
+# ROUTES SYSTÈME SOCIAL - À AJOUTER À app.py
+# ============================================
+
+# PROFILS PUBLICS
+# ============================================
+
+@app.route('/profile/<string:username>')
+@login_required
+def public_profile(username):
+    """Page de profil public d'un utilisateur"""
+    user = User.query.filter_by(username=username).first()
+    assert user, "Utilisateur non trouvé"
+    
+    return render_template('public_profile.html', profile_user=user)
+
+@app.route('/api/profile/<int:user_id>')
+@login_required
+def get_public_profile(user_id):
+    """API pour récupérer un profil public"""
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    
+    profile = user.get_public_profile()
+    
+    # Ajouter le statut d'amitié
+    profile['is_friend'] = current_user.is_friends_with(user)
+    profile['request_sent'] = current_user.has_sent_request_to(user)
+    profile['request_received'] = current_user.has_received_request_from(user)
+    profile['is_self'] = current_user.id == user.id
+    
+    return jsonify(profile)
+
+@app.route('/api/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    """Mettre à jour son profil"""
+    data = request.json
+    
+    if 'bio' in data:
+        bio = data['bio'][:500]  # Limiter à 500 caractères
+        current_user.bio = bio
+    
+    if 'favorite_game' in data:
+        favorite_game = data['favorite_game']
+        assert favorite_game in ['', 'blackjack', 'roulette', 'minebomb', 'slots', 'clicker'], "Jeu invalide"
+        current_user.favorite_game = favorite_game
+    
+    if 'is_public' in data:
+        current_user.is_public = bool(data['is_public'])
+    
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Profil mis à jour'})
+
+
+
+
+# SYSTÈME D'AMIS
+# ============================================
+
+@app.route('/api/friends/list')
+@login_required
+def get_friends():
+    """Liste des amis"""
+    friends = current_user.friends.all()
+    
+    friends_data = []
+    for friend in friends:
+        stats = friend.get_stats()
+        friends_data.append({
+            'id': friend.id,
+            'username': friend.username,
+            'money': friend.money,
+            'favorite_game': friend.favorite_game,
+            'total_games': stats['total_games'],
+            'win_rate': stats['win_rate'],
+            'is_online': (datetime.utcnow() - friend.last_login).seconds < 300  # En ligne si < 5 min
+        })
+    
+    return jsonify(friends_data)
+
+@app.route('/api/friends/requests')
+@login_required
+def get_friend_requests():
+    """Liste des demandes d'amis reçues"""
+    requests = current_user.received_requests.all()
+    
+    requests_data = []
+    for user in requests:
+        requests_data.append({
+            'id': user.id,
+            'username': user.username,
+            'money': user.money,
+            'avatar_url': user.avatar_url
+        })
+    
+    return jsonify(requests_data)
+
+@app.route('/api/friends/send/<int:user_id>', methods=['POST'])
+@login_required
+def send_friend_request(user_id):
+    """Envoyer une demande d'ami"""
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    
+    current_user.send_friend_request(user)
+    
+    return jsonify({'success': True, 'message': f'Demande envoyée à {user.username}'})
+
+@app.route('/api/friends/accept/<int:user_id>', methods=['POST'])
+@login_required
+def accept_friend_request(user_id):
+    """Accepter une demande d'ami"""
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    
+    current_user.accept_friend_request(user)
+    
+    return jsonify({'success': True, 'message': f'Vous êtes maintenant ami avec {user.username}'})
+
+@app.route('/api/friends/reject/<int:user_id>', methods=['POST'])
+@login_required
+def reject_friend_request(user_id):
+    """Rejeter une demande d'ami"""
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    
+    current_user.reject_friend_request(user)
+    
+    return jsonify({'success': True, 'message': 'Demande rejetée'})
+
+@app.route('/api/friends/remove/<int:user_id>', methods=['POST'])
+@login_required
+def remove_friend(user_id):
+    """Retirer un ami"""
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    
+    current_user.remove_friend(user)
+    
+    return jsonify({'success': True, 'message': f'{user.username} retiré de vos amis'})
+
+
+# SYSTÈME DE CLANS
+# ============================================
+
+@app.route('/clans')
+@login_required
+def clans_page():
+    """Page des clans"""
+    return render_template('clans.html')
+
+@app.route('/api/clans/list')
+@login_required
+def get_clans():
+    """Liste de tous les clans"""
+    clans = Clan.query.order_by(Clan.money.desc()).all()
+    
+    clans_data = []
+    for clan in clans:
+        clans_data.append({
+            'id': clan.id,
+            'name': clan.name,
+            'tag': clan.tag,
+            'description': clan.description,
+            'leader': clan.leader.username,
+            'members_count': clan.get_member_count(),
+            'max_members': clan.max_members,
+            'total_money': clan.get_total_money(),
+            'bank_money': clan.money,
+            'is_public': clan.is_public,
+            'created_at': clan.created_at.strftime('%Y-%m-%d')
+        })
+    
+    return jsonify(clans_data)
+
+@app.route('/api/clans/create', methods=['POST'])
+@login_required
+def create_clan():
+    """Créer un clan (coûte 100M)"""
+    data = request.json
+    name = data.get('name')
+    tag = data.get('tag')
+    description = data.get('description', '')
+    
+    # ASSERTIONS
+    assert name and tag, "Nom et tag requis"
+    assert len(name) >= 3 and len(name) <= 50, "Le nom doit faire entre 3 et 50 caractères"
+    assert len(tag) >= 2 and len(tag) <= 10, "Le tag doit faire entre 2 et 10 caractères"
+    assert current_user.money >= 100_000_000, "Il faut 100,000,000$ pour créer un clan"
+    assert current_user.clan_id is None, "Vous êtes déjà dans un clan"
+    assert not Clan.query.filter_by(name=name).first(), "Ce nom de clan existe déjà"
+    assert not Clan.query.filter_by(tag=tag).first(), "Ce tag existe déjà"
+    
+    # Créer le clan
+    current_user.remove_money(100_000_000)
+    
+    clan = Clan(
+        name=name,
+        tag=tag,
+        description=description,
+        leader_id=current_user.id
+    )
+    
+    db.session.add(clan)
+    db.session.commit()
+    
+    # Ajouter le créateur comme leader
+    clan.add_member(current_user, role='leader')
+    
+    return jsonify({
+        'success': True,
+        'message': f'Clan [{tag}] {name} créé !',
+        'clan_id': clan.id
+    })
+
+@app.route('/api/clans/<int:clan_id>')
+@login_required
+def get_clan(clan_id):
+    """Détails d'un clan"""
+    clan = Clan.query.get(clan_id)
+    assert clan, "Clan non trouvé"
+    
+    members = []
+    for member in clan.members.all():
+        stats = member.get_stats()
+        
+        # Récupérer le rôle
+        stmt = clan_members.select().where(
+            (clan_members.c.clan_id == clan_id) &
+            (clan_members.c.user_id == member.id)
+        )
+        result = db.session.execute(stmt).first()
+        role = result.role if result else 'member'
+        
+        members.append({
+            'id': member.id,
+            'username': member.username,
+            'money': member.money,
+            'total_games': stats['total_games'],
+            'win_rate': stats['win_rate'],
+            'role': role,
+            'is_online': (datetime.utcnow() - member.last_login).seconds < 300
+        })
+    
+    return jsonify({
+        'id': clan.id,
+        'name': clan.name,
+        'tag': clan.tag,
+        'description': clan.description,
+        'leader_id': clan.leader_id,
+        'leader_username': clan.leader.username,
+        'members_count': clan.get_member_count(),
+        'max_members': clan.max_members,
+        'total_money': clan.get_total_money(),
+        'bank_money': clan.money,
+        'is_public': clan.is_public,
+        'created_at': clan.created_at.strftime('%Y-%m-%d'),
+        'members': members,
+        'is_member': clan.is_member(current_user),
+        'is_leader': clan.is_leader(current_user),
+        'is_officer': clan.is_officer(current_user)
+    })
+
+@app.route('/api/clans/<int:clan_id>/join', methods=['POST'])
+@login_required
+def join_clan(clan_id):
+    """Rejoindre un clan"""
+    clan = Clan.query.get(clan_id)
+    assert clan, "Clan non trouvé"
+    assert clan.is_public, "Ce clan est sur invitation uniquement"
+    
+    clan.add_member(current_user)
+    
+    return jsonify({'success': True, 'message': f'Vous avez rejoint [{clan.tag}] {clan.name}'})
+
+@app.route('/api/clans/<int:clan_id>/leave', methods=['POST'])
+@login_required
+def leave_clan(clan_id):
+    """Quitter un clan"""
+    clan = Clan.query.get(clan_id)
+    assert clan, "Clan non trouvé"
+    
+    clan.remove_member(current_user)
+    
+    return jsonify({'success': True, 'message': f'Vous avez quitté [{clan.tag}] {clan.name}'})
+
+@app.route('/api/clans/<int:clan_id>/kick/<int:user_id>', methods=['POST'])
+@login_required
+def kick_from_clan(clan_id, user_id):
+    """Expulser un membre (leader/officer seulement)"""
+    clan = Clan.query.get(clan_id)
+    assert clan, "Clan non trouvé"
+    assert clan.is_leader(current_user) or clan.is_officer(current_user), "Permissions insuffisantes"
+    
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    
+    clan.remove_member(user)
+    
+    return jsonify({'success': True, 'message': f'{user.username} a été expulsé'})
+
+@app.route('/api/clans/<int:clan_id>/promote/<int:user_id>', methods=['POST'])
+@login_required
+def promote_member(clan_id, user_id):
+    """Promouvoir un membre en officier (leader seulement)"""
+    clan = Clan.query.get(clan_id)
+    assert clan, "Clan non trouvé"
+    assert clan.is_leader(current_user), "Seul le chef peut promouvoir"
+    
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    
+    clan.promote_to_officer(user)
+    
+    return jsonify({'success': True, 'message': f'{user.username} est maintenant officier'})
+
+@app.route('/api/clans/<int:clan_id>/donate', methods=['POST'])
+@login_required
+def donate_to_clan(clan_id):
+    """Donner de l'argent à la banque du clan"""
+    clan = Clan.query.get(clan_id)
+    assert clan, "Clan non trouvé"
+    assert clan.is_member(current_user), "Vous n'êtes pas membre de ce clan"
+    
+    data = request.json
+    amount = int(data.get('amount', 0))
+    
+    assert amount > 0, "Montant invalide"
+    assert current_user.money >= amount, "Fonds insuffisants"
+    
+    current_user.remove_money(amount)
+    clan.money += amount
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': f'{amount}$ donnés à la banque du clan',
+        'clan_money': clan.money,
+        'user_money': current_user.money
+    })
+
+# AJOUTER CETTE ROUTE DANS app.py (après /api/clans/<int:clan_id>/donate)
+
+@app.route('/api/clans/<int:clan_id>/withdraw', methods=['POST'])
+@login_required
+def withdraw_from_clan(clan_id):
+    """Retirer de l'argent de la banque du clan (leader seulement)"""
+    clan = Clan.query.get(clan_id)
+    assert clan, "Clan non trouvé"
+    assert clan.is_leader(current_user), "Seul le chef peut retirer de l'argent"
+    
+    data = request.json
+    amount = int(data.get('amount', 0))
+    
+    assert amount > 0, "Montant invalide"
+    assert clan.money >= amount, "Fonds insuffisants dans la banque du clan"
+    
+    clan.money -= amount
+    current_user.add_money(amount)
+    
+    return jsonify({
+        'success': True,
+        'message': f'{amount}$ retirés de la banque du clan',
+        'clan_money': clan.money,
+        'user_money': current_user.money
+    })
+
+@app.route('/api/clans/<int:clan_id>/update', methods=['POST'])
+@login_required
+def update_clan(clan_id):
+    """Mettre à jour le clan (leader seulement)"""
+    clan = Clan.query.get(clan_id)
+    assert clan, "Clan non trouvé"
+    assert clan.is_leader(current_user), "Seul le chef peut modifier le clan"
+    
+    data = request.json
+    
+    if 'description' in data:
+        clan.description = data['description'][:500]
+    
+    if 'is_public' in data:
+        clan.is_public = bool(data['is_public'])
+    
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Clan mis à jour'})
+
+
+# RECHERCHE D'UTILISATEURS
+# ============================================
+
+@app.route('/api/users/search')
+@login_required
+def search_users():
+    """Rechercher des utilisateurs"""
+    query = request.args.get('q', '').strip()
+    
+    if len(query) < 2:
+        return jsonify([])
+    
+    users = User.query.filter(
+        User.username.ilike(f'%{query}%')
+    ).limit(20).all()
+    
+    results = []
+    for user in users:
+        if user.id == current_user.id:
+            continue
+        
+        results.append({
+            'id': user.id,
+            'username': user.username,
+            'money': user.money if user.is_public else None,
+            'favorite_game': user.favorite_game,
+            'is_friend': current_user.is_friends_with(user),
+            'request_sent': current_user.has_sent_request_to(user),
+            'clan_tag': Clan.query.get(user.clan_id).tag if user.clan_id else None
+        })
+    
+    return jsonify(results)
+
+    # Ajouter ces routes dans app.py
+
+# Route pour la page sociale
+@app.route('/social')
+@login_required
+def social_page():
+    """Page des amis et recherche"""
+    return render_template('social.html')
+
+# Corriger la route du profil public pour accepter un ID
+@app.route('/profile/user/<int:user_id>')
+@login_required
+def public_profile_by_id(user_id):
+    """Page de profil public d'un utilisateur par ID"""
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    return render_template('public_profile.html', profile_user=user)
+
+# Ajouter la route pour les détails de clan
+@app.route('/clans/<int:clan_id>')
+@login_required
+def clan_detail(clan_id):
+    """Page de détails d'un clan"""
+    clan = Clan.query.get(clan_id)
+    assert clan, "Clan non trouvé"
+    return render_template('clan_detail.html', clan_id=clan_id)
+
+# ============================================
+# PLINKO
+# ============================================
+
+@app.route('/api/plinko/drop', methods=['POST'])
+@login_required
+def plinko_drop():
+    """Lâcher la balle dans le Plinko"""
+    data = request.json
+    bet = int(data.get('bet', 50))
+    risk = data.get('risk', 'medium')  # low, medium, high
+    
+    # ASSERTIONS
+    assert bet >= 10, "Mise minimum : 10$"
+    assert bet <= current_user.money, "Mise trop élevée"
+    assert risk in ['low', 'medium', 'high'], "Niveau de risque invalide"
+    
+    current_user.remove_money(bet)
+    
+    # Simuler la chute de la balle (nombre de directions : 16 niveaux)
+    path = []
+    position = 8  # Centre (sur 17 positions possibles)
+    
+    for _ in range(16):
+        direction = random.choice([-1, 1])
+        position += direction
+        position = max(0, min(16, position))  # Limiter entre 0 et 16
+        path.append(position)
+    
+    # Multiplicateurs selon le risque et la position finale
+    multipliers = {
+        'low': [1.5, 1.3, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.3, 1.5],
+        'medium': [5.0, 3.0, 2.0, 1.5, 1.0, 0.5, 0.3, 0.2, 0.1, 0.2, 0.3, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
+        'high': [50.0, 20.0, 5.0, 2.0, 0.5, 0.2, 0.1, 0.0, 0.0, 0.0, 0.1, 0.2, 0.5, 2.0, 5.0, 20.0, 50.0]
+    }
+    
+    multiplier = multipliers[risk][position]
+    
+    winnings = int(bet * multiplier)
+    profit = winnings - bet
+    result = 'win' if multiplier >= 1.0 else 'lose'
+    
+    if winnings > 0:
+        current_user.add_money(winnings)
+    
+    # Sauvegarder l'historique
+    history = GameHistory(
+        user_id=current_user.id,
+        game_type='plinko',
+        bet_amount=bet,
+        result=result,
+        profit=profit,
+        multiplier=multiplier,
+        details={'risk': risk, 'position': position, 'path': path}
+    )
+    db.session.add(history)
+    db.session.commit()
+    
+    new_achievements = check_and_unlock_achievements(current_user)
+    
+    return jsonify({
+        'result': result,
+        'path': path,
+        'position': position,
+        'multiplier': multiplier,
+        'profit': profit,
+        'winnings': winnings,
+        'money': current_user.money,
+        'stats': get_global_stats(),
+        'new_achievements': new_achievements
+    })
 
 @app.route('/health')
 def health():

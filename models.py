@@ -5,8 +5,46 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+# ============================================
+# TABLES D'ASSOCIATION (Many-to-Many)
+# ============================================
+
+# Table pour les amitiés
+friendships = db.Table('friendships',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('friend_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('created_at', db.DateTime, default=datetime.utcnow)
+)
+
+# Table pour les demandes d'amis
+friend_requests = db.Table('friend_requests',
+    db.Column('sender_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('receiver_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('created_at', db.DateTime, default=datetime.utcnow)
+)
+
+# Table pour les membres de clans
+clan_members = db.Table('clan_members',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('clan_id', db.Integer, db.ForeignKey('clans.id'), primary_key=True),
+    db.Column('joined_at', db.DateTime, default=datetime.utcnow),
+    db.Column('role', db.String(20), default='member')  # 'leader', 'officer', 'member'
+)
+
+# Table pour les achievements des utilisateurs
+user_achievements = db.Table('user_achievements',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
+    db.Column('achievement_id', db.Integer, db.ForeignKey('achievements.id'), primary_key=True),
+    db.Column('unlocked_at', db.DateTime, default=datetime.utcnow)
+)
+
+
+# ============================================
+# MODÈLES
+# ============================================
+
 class User(UserMixin, db.Model):
-    """Modèle utilisateur"""
+    """Modèle utilisateur avec système social"""
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -17,35 +55,58 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, default=datetime.utcnow)
     
+    # Profil public
+    bio = db.Column(db.String(500), default='')
+    avatar_url = db.Column(db.String(255), default='')
+    is_public = db.Column(db.Boolean, default=True)
+    favorite_game = db.Column(db.String(50), default='')
+    
+    # Relations
     clicker_data = db.relationship('ClickerData', backref='user', uselist=False, cascade='all, delete-orphan')
     game_history = db.relationship('GameHistory', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     achievements = db.relationship('Achievement', secondary='user_achievements', backref='users')
     
+    # Relations sociales
+    friends = db.relationship(
+        'User',
+        secondary=friendships,
+        primaryjoin=(friendships.c.user_id == id),
+        secondaryjoin=(friendships.c.friend_id == id),
+        backref=db.backref('friended_by', lazy='dynamic'),
+        lazy='dynamic'
+    )
+    
+    sent_requests = db.relationship(
+        'User',
+        secondary=friend_requests,
+        primaryjoin=(friend_requests.c.sender_id == id),
+        secondaryjoin=(friend_requests.c.receiver_id == id),
+        backref=db.backref('received_requests', lazy='dynamic'),
+        lazy='dynamic'
+    )
+    
+    # Clan
+    clan_id = db.Column(db.Integer, db.ForeignKey('clans.id'), nullable=True)
+    
     def set_password(self, password):
-        """Hash le mot de passe"""
         self.password_hash = generate_password_hash(password)
     
     def check_password(self, password):
-        """Vérifie le mot de passe"""
         return check_password_hash(self.password_hash, password)
     
     def add_money(self, amount):
-        """Ajoute de l'argent (avec assertion)"""
         assert amount >= 0, "Le montant ne peut pas être négatif"
         self.money += amount
         db.session.commit()
     
     def remove_money(self, amount):
-        """Retire de l'argent (avec assertion)"""
         assert amount >= 0, "Le montant ne peut pas être négatif"
         assert self.money >= amount, "Fonds insuffisants"
         self.money -= amount
         db.session.commit()
     
     def get_stats(self):
-        """Retourne les statistiques du joueur"""
         games = self.game_history.all()
-        
         total_games = len(games)
         total_wins = sum(1 for g in games if g.result == 'win')
         total_losses = sum(1 for g in games if g.result == 'lose')
@@ -62,12 +123,167 @@ class User(UserMixin, db.Model):
             'net_profit': total_winnings - total_wagered
         }
     
+    # Méthodes sociales
+    def is_friends_with(self, user):
+        return self.friends.filter(friendships.c.friend_id == user.id).count() > 0
+    
+    def has_sent_request_to(self, user):
+        return self.sent_requests.filter(friend_requests.c.receiver_id == user.id).count() > 0
+    
+    def has_received_request_from(self, user):
+        return self.received_requests.filter(friend_requests.c.sender_id == user.id).count() > 0
+    
+    def send_friend_request(self, user):
+        assert user.id != self.id, "Vous ne pouvez pas vous ajouter vous-même"
+        assert not self.is_friends_with(user), "Déjà amis"
+        assert not self.has_sent_request_to(user), "Demande déjà envoyée"
+        
+        self.sent_requests.append(user)
+        db.session.commit()
+    
+    def accept_friend_request(self, user):
+        assert self.has_received_request_from(user), "Pas de demande de cet utilisateur"
+        
+        self.received_requests.remove(user)
+        self.friends.append(user)
+        user.friends.append(self)
+        
+        db.session.commit()
+    
+    def reject_friend_request(self, user):
+        assert self.has_received_request_from(user), "Pas de demande de cet utilisateur"
+        self.received_requests.remove(user)
+        db.session.commit()
+    
+    def remove_friend(self, user):
+        assert self.is_friends_with(user), "Pas amis"
+        self.friends.remove(user)
+        user.friends.remove(self)
+        db.session.commit()
+    
+    def get_public_profile(self):
+        stats = self.get_stats()
+        clan = Clan.query.get(self.clan_id) if self.clan_id else None
+        
+        return {
+            'id': self.id,
+            'username': self.username,
+            'bio': self.bio,
+            'avatar_url': self.avatar_url,
+            'money': self.money if self.is_public else None,
+            'created_at': self.created_at.strftime('%Y-%m-%d'),
+            'favorite_game': self.favorite_game,
+            'total_games': stats['total_games'],
+            'total_wins': stats['total_wins'],
+            'win_rate': stats['win_rate'],
+            'achievements_count': len(self.achievements),
+            'clan': {
+                'id': clan.id,
+                'name': clan.name,
+                'tag': clan.tag
+            } if clan else None
+        }
+    
     def __repr__(self):
         return f'<User {self.username}>'
 
 
+class Clan(db.Model):
+    """Modèle pour les clans"""
+    __tablename__ = 'clans'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    tag = db.Column(db.String(10), unique=True, nullable=False)
+    description = db.Column(db.String(500), default='')
+    
+    leader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    leader = db.relationship('User', foreign_keys=[leader_id], backref='led_clan')
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    money = db.Column(db.Integer, default=0)
+    
+    max_members = db.Column(db.Integer, default=50)
+    is_public = db.Column(db.Boolean, default=True)
+    
+    members = db.relationship(
+        'User',
+        secondary=clan_members,
+        backref=db.backref('clans_joined', lazy='dynamic'),
+        lazy='dynamic'
+    )
+    
+    def get_member_count(self):
+        return self.members.count()
+    
+    def get_total_money(self):
+        members_money = sum(m.money for m in self.members.all())
+        return members_money + self.money
+    
+    def get_officers(self):
+        stmt = clan_members.select().where(
+            (clan_members.c.clan_id == self.id) & 
+            (clan_members.c.role == 'officer')
+        )
+        result = db.session.execute(stmt)
+        officer_ids = [row.user_id for row in result]
+        return User.query.filter(User.id.in_(officer_ids)).all()
+    
+    def is_leader(self, user):
+        return user.id == self.leader_id
+    
+    def is_officer(self, user):
+        stmt = clan_members.select().where(
+            (clan_members.c.clan_id == self.id) &
+            (clan_members.c.user_id == user.id) &
+            (clan_members.c.role == 'officer')
+        )
+        return db.session.execute(stmt).first() is not None
+    
+    def is_member(self, user):
+        return self.members.filter_by(id=user.id).count() > 0
+    
+    def add_member(self, user, role='member'):
+        assert self.get_member_count() < self.max_members, "Clan plein"
+        assert not self.is_member(user), "Déjà membre"
+        assert user.clan_id is None, "Déjà dans un clan"
+        
+        stmt = clan_members.insert().values(
+            user_id=user.id,
+            clan_id=self.id,
+            role=role,
+            joined_at=datetime.utcnow()
+        )
+        db.session.execute(stmt)
+        
+        user.clan_id = self.id
+        db.session.commit()
+    
+    def remove_member(self, user):
+        assert self.is_member(user), "Pas membre du clan"
+        assert not self.is_leader(user), "Le chef ne peut pas quitter son clan"
+        
+        self.members.remove(user)
+        user.clan_id = None
+        db.session.commit()
+    
+    def promote_to_officer(self, user):
+        assert self.is_member(user), "Pas membre du clan"
+        assert not self.is_officer(user), "Déjà officier"
+        
+        stmt = clan_members.update().where(
+            (clan_members.c.clan_id == self.id) &
+            (clan_members.c.user_id == user.id)
+        ).values(role='officer')
+        db.session.execute(stmt)
+        db.session.commit()
+    
+    def __repr__(self):
+        return f'<Clan [{self.tag}] {self.name}>'
+
+
 class ClickerData(db.Model):
-    """Données du Money Clicker par utilisateur - VERSION RÉÉQUILIBRÉE"""
+    """Données du Money Clicker"""
     __tablename__ = 'clicker_data'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -79,7 +295,6 @@ class ClickerData(db.Model):
     factory_level = db.Column(db.Integer, default=0)
     bank_level = db.Column(db.Integer, default=0)
     
-    # COÛTS - Plus élevés et progressifs
     click_cost = db.Column(db.Integer, default=25)
     auto_cost = db.Column(db.Integer, default=150)
     factory_cost = db.Column(db.Integer, default=800)
@@ -90,7 +305,6 @@ class ClickerData(db.Model):
     
     @property
     def passive_income(self):
-        """Calcule le revenu passif - VERSION RÉÉQUILIBRÉE avec ASSERTIONS"""
         assert self.auto_level >= 0, "Le niveau auto ne peut pas être négatif"
         assert self.factory_level >= 0, "Le niveau factory ne peut pas être négatif"
         assert self.bank_level >= 0, "Le niveau bank ne peut pas être négatif"
@@ -141,33 +355,23 @@ class Achievement(db.Model):
         return f'<Achievement {self.name}>'
 
 
-user_achievements = db.Table('user_achievements',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('achievement_id', db.Integer, db.ForeignKey('achievements.id'), primary_key=True),
-    db.Column('unlocked_at', db.DateTime, default=datetime.utcnow)
-)
-
 # ============================================
-# PROGRAMMATION ORIENTÉE OBJET + STRUCTURES DE DONNÉES
+# PROGRAMMATION ORIENTÉE OBJET + PILE
 # ============================================
 
 class GameAction:
-    """
-    Classe représentant une action de jeu (POO)
-    Utilisée pour l'historique avec une PILE (Stack)
-    """
+    """Classe représentant une action de jeu"""
     def __init__(self, action_type, card=None, total=0, details=None):
-        # ASSERTIONS pour valider les paramètres
-        assert isinstance(action_type, str), "Le type d'action doit être une chaîne de caractères"
+        assert isinstance(action_type, str), "Le type d'action doit être une chaîne"
         assert action_type in ['hit', 'stand', 'start', 'bet', 'deal_player', 'deal_dealer', 'dealer_hit', 'end'], \
             "Type d'action invalide"
         assert isinstance(total, (int, float)), "Le total doit être un nombre"
         assert total >= 0, "Le total ne peut pas être négatif"
         
-        self.action_type = action_type  # 'hit', 'stand', 'start', 'bet'
-        self.card = card  # Carte tirée (pour BlackJack)
-        self.total = total  # Total de la main
-        self.details = details or {}  # Détails supplémentaires
+        self.action_type = action_type
+        self.card = card
+        self.total = total
+        self.details = details or {}
         self.timestamp = datetime.utcnow()
     
     def __repr__(self):
@@ -176,7 +380,6 @@ class GameAction:
         return f'<GameAction {self.action_type} - Total: {self.total}>'
     
     def to_dict(self):
-        """Convertit l'action en dictionnaire"""
         return {
             'action_type': self.action_type,
             'card': self.card,
@@ -187,48 +390,40 @@ class GameAction:
 
 
 class ActionStack:
+    """Pile pour gérer l'historique des actions"""
     def __init__(self, max_size=50):
         assert isinstance(max_size, int), "La taille maximale doit être un entier"
         assert max_size > 0, "La taille maximale doit être positive"
         
-        self.stack = []  # PILE
+        self.stack = []
         self.max_size = max_size
     
     def push(self, action):
-        """Empiler une action (ajouter au sommet)"""
         assert isinstance(action, GameAction), "L'action doit être une instance de GameAction"
-        
         self.stack.append(action)
-        # Limiter la taille pour éviter surcharge mémoire
         if len(self.stack) > self.max_size:
-            self.stack.pop(0)  # Retirer la plus ancienne
+            self.stack.pop(0)
     
     def pop(self):
-        """Dépiler (retirer et retourner la dernière action)"""
         if not self.is_empty():
             return self.stack.pop()
         return None
     
     def peek(self):
-        """Voir le sommet de la pile sans dépiler"""
         if not self.is_empty():
             return self.stack[-1]
         return None
     
     def is_empty(self):
-        """Vérifier si la pile est vide"""
         return len(self.stack) == 0
     
     def size(self):
-        """Retourner la taille de la pile"""
         return len(self.stack)
     
     def clear(self):
-        """Vider complètement la pile"""
         self.stack = []
     
     def get_all(self):
-        """Obtenir toutes les actions (du plus ancien au plus récent)"""
         return list(self.stack)
     
     def __repr__(self):
@@ -236,13 +431,12 @@ class ActionStack:
 
 
 class GameManager:
+    """Gestionnaire de jeux avec historique"""
     def __init__(self):
-        self.action_history = ActionStack()  # PILE pour l'historique
-        self.active_games = {}               # Dictionnaire des parties actives
+        self.action_history = ActionStack()
+        self.active_games = {}
         
     def start_game(self, user_id, game_type, bet):
-        """Démarre une nouvelle partie"""
-        # ASSERTIONS
         assert isinstance(user_id, int), "L'ID utilisateur doit être un entier"
         assert user_id > 0, "L'ID utilisateur doit être positif"
         assert isinstance(game_type, str), "Le type de jeu doit être une chaîne"
@@ -259,14 +453,11 @@ class GameManager:
         
         action = GameAction('start', details={'game_type': game_type, 'bet': bet})
         self.action_history.push(action)
-        
-        # Activer immédiatement
         self.active_games[user_id] = game_data
         
         return game_data
     
     def end_game(self, user_id):
-        """Termine une partie"""
         assert isinstance(user_id, int), "L'ID utilisateur doit être un entier"
         
         if user_id in self.active_games:
@@ -277,21 +468,17 @@ class GameManager:
         return None
     
     def record_action(self, action_type, card=None, total=0, details=None):
-        """Enregistre une action dans l'historique (PILE)"""
         action = GameAction(action_type, card, total, details)
         self.action_history.push(action)
         return action
     
     def undo_last_action(self):
-        """Annule la dernière action (dépile)"""
         return self.action_history.pop()
     
     def get_action_history(self):
-        """Récupère tout l'historique des actions"""
         return self.action_history.get_all()
     
     def clear_history(self):
-        """Réinitialise l'historique"""
         self.action_history.clear()
     
     def __repr__(self):

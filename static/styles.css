@@ -18,6 +18,8 @@ body {
     color: white;
     min-height: 100vh;
     overflow-x: hidden;
+    margin: 0;
+    padding: 0;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -26,64 +28,31 @@ h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.02em;
 }
 
-.money-display {
-    background: #1e293b;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: bold;
-    color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    transition: transform 0.3s;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-}
-
-.header {
-    background: rgba(15, 23, 42, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: #f59e0b;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.money-display {
-    background: #1e293b;
-    padding: 10px 24px;
-    border-radius: 8px;
-    font-size: 20px;
-    font-weight: bold;
-    color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    transition: transform 0.3s;
-}
-
+/* CASES ARGENT - TOUTES DE MÊME TAILLE */
+.money-display,
 .income-display {
     background: #1e293b;
     padding: 12px 24px;
     border-radius: 8px;
     font-size: 18px;
     font-weight: bold;
-    color: #f59e0b;
-    border: 1px solid rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    transition: transform 0.3s;
     min-height: 44px;
+    min-width: 120px;
     display: flex;
     align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.money-display {
+    color: #10b981;
+}
+
+.income-display {
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.2);
 }
 
 .money-display.pulse {
@@ -95,22 +64,18 @@ h1, h2, h3, h4, h5, h6 {
     50% { transform: scale(1.05); }
 }
 
-.container {
-    max-width: 1400px;
+/* CONTAINER */
+.container,
+.social-container,
+.clans-container,
+.profile-container {
+    max-width: 1600px;
     margin: 0 auto;
     padding: 40px 20px;
-}
-
-.welcome-message {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    padding: 16px 24px;
-    border-radius: 12px;
-    text-align: center;
-    margin-bottom: 24px;
-    color: white;
-    font-size: 16px;
-    animation: slideDown 0.5s;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: calc(220px + 40px);
+    padding-right: 40px;
 }
 
 @keyframes slideDown {
@@ -126,10 +91,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .menu-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 24px;
     margin-top: 40px;
-    max-width: 1800px;
+    max-width: 2000px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -296,8 +261,10 @@ h1, h2, h3, h4, h5, h6 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 32px;
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
+    align-items: start;
+    justify-content: center;
 }
 
 .click-area {
@@ -859,6 +826,15 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
 }
 
+.social-container,
+.clans-container,
+.profile-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    margin-left: 240px;
+}
+
 .leaderboard-container {
     overflow-x: auto;
 }
@@ -957,647 +933,571 @@ h1, h2, h3, h4, h5, h6 {
     color: #ef4444;
 }
 
-/* 
-   RESPONSIVE MOBILE - À ajouter à la fin de styles.css
-   Optimisation pour téléphones et tablettes
-*/
+/* MENU LATÉRAL - TEXTES TOUJOURS VISIBLES */
+.sidebar {
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    bottom: 20px;
+    width: 200px;
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 8px;
+}
 
-/* Tablettes (iPad, etc.) */
-@media (max-width: 1024px) {
-    .container {
-        padding: 30px 15px;
+.sidebar-logo {
+    padding: 16px;
+    text-align: center;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    margin-bottom: 8px;
+}
+
+.sidebar-header {
+    padding: 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    margin-bottom: 12px;
+}
+
+.sidebar-money {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+    padding: 14px;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 8px;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+}
+
+.sidebar-money-value {
+    color: #10b981;
+    font-size: 22px;
+    font-weight: 800;
+    display: block;
+    text-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    animation: moneyPulse 2s infinite;
+}
+
+@keyframes moneyPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+.sidebar-income {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
+    padding: 8px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 13px;
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    font-weight: 700;
+    display: block;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+}
+
+.sidebar-menu {
+    flex: 1;
+    padding: 8px 4px;
+    overflow-y: auto;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-item::before {
+    content: '';
+    position: absolute;
+    left: -100%;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.sidebar-item:hover::before {
+    left: 100%;
+}
+
+.sidebar-item:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: #cbd5e1;
+    transform: translateX(4px);
+}
+
+.sidebar-item.active {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.sidebar-icon {
+    font-size: 20px;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.sidebar-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: rgba(148, 163, 184, 0.1);
+    margin: 12px 8px;
+}
+
+.sidebar-footer {
+    padding: 12px 4px;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.sidebar-item.logout {
+    color: #ef4444;
+}
+
+.sidebar-item.logout:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.main-content {
+    margin-left: 100px;
+    padding: 20px;
+    min-height: 100vh;
+    transition: margin-left 0.3s;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.social-container,
+.clans-container,
+.profile-container,
+.clan-container,
+.admin-container {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
     }
-
-    .menu-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-    }
-
-    .game-card {
-        min-height: 340px;
-    }
-
-    .game-logo {
-        width: 180px;
-        height: 180px;
-    }
-
-    .clicker-container {
-        grid-template-columns: 1fr;
-        gap: 24px;
-    }
-
-    .click-button {
-        width: 250px;
-        height: 250px;
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
     }
 }
 
-/* Smartphones en paysage et petites tablettes */
+/* Animation des cartes */
+.user-card,
+.clan-card,
+.stat-card-large,
+.achievement-card,
+.member-card {
+    animation: slideDown 0.4s ease-out;
+    animation-fill-mode: backwards;
+}
+
+.user-card:nth-child(1) { animation-delay: 0.05s; }
+.user-card:nth-child(2) { animation-delay: 0.1s; }
+.user-card:nth-child(3) { animation-delay: 0.15s; }
+.user-card:nth-child(4) { animation-delay: 0.2s; }
+.user-card:nth-child(5) { animation-delay: 0.25s; }
+.user-card:nth-child(6) { animation-delay: 0.3s; }
+
+.clan-card:nth-child(1) { animation-delay: 0.05s; }
+.clan-card:nth-child(2) { animation-delay: 0.1s; }
+.clan-card:nth-child(3) { animation-delay: 0.15s; }
+.clan-card:nth-child(4) { animation-delay: 0.2s; }
+.clan-card:nth-child(5) { animation-delay: 0.25s; }
+
+.stat-card-large:nth-child(1) { animation-delay: 0.05s; }
+.stat-card-large:nth-child(2) { animation-delay: 0.1s; }
+.stat-card-large:nth-child(3) { animation-delay: 0.15s; }
+.stat-card-large:nth-child(4) { animation-delay: 0.2s; }
+.stat-card-large:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 @media (max-width: 768px) {
-    /* Header adapté */
-    .header {
-        padding: 15px;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .logo img {
-        width: 80px;
-        height: auto;
-    }
-
-    .header-right {
+    .sidebar {
+        left: 0;
+        top: 0;
+        bottom: auto;
         width: 100%;
-        justify-content: space-between;
+        height: auto;
+        border-radius: 0;
+        padding: 12px;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+    
+    .sidebar-logo {
+        display: none;
+    }
+    
+    .sidebar-header {
+        border-bottom: none;
+        border-right: 1px solid rgba(148, 163, 184, 0.1);
+        padding: 8px 12px;
+        margin: 0 12px 0 0;
+    }
+    
+    .sidebar-money {
+        padding: 8px 12px;
+    }
+    
+    .sidebar-money-value {
+        font-size: 16px;
+    }
+    
+    .sidebar-income {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+    
+    .sidebar-menu {
+        flex-direction: row;
+        padding: 0;
+        flex: 1;
+        display: flex;
         gap: 8px;
+        overflow-x: auto;
     }
-
-    .money-display,
-    .income-display,
-    .reset-btn {
-        padding: 10px 16px;
-        font-size: 14px;
-        min-height: 40px;
+    
+    .sidebar-item {
+        flex-direction: column;
+        padding: 8px;
+        margin: 0;
+        min-width: 60px;
+        gap: 4px;
     }
-
-    /* Menu principal */
+    
+    .sidebar-text {
+        font-size: 10px;
+    }
+    
+    .sidebar-icon {
+        font-size: 18px;
+    }
+    
+    .sidebar-divider {
+        display: none;
+    }
+    
+    .sidebar-footer {
+        border-top: none;
+        border-left: 1px solid rgba(148, 163, 184, 0.1);
+        padding: 0 0 0 12px;
+    }
+    
+    /* TOUS LES CONTAINERS */
+    .container,
+    .social-container,
+    .clans-container,
+    .profile-container,
+    .clan-container,
+    .admin-container {
+        margin-left: 0 !important;
+        margin-right: 0;
+        padding: 20px !important;
+        padding-top: 100px !important;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+    }
+    
+    /* Menu grid */
     .menu-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
         gap: 16px;
     }
-
+    
     .game-card {
-        padding: 20px 16px;
-        min-height: 300px;
+        min-height: auto;
     }
-
+    
     .game-logo {
         width: 150px;
         height: 150px;
     }
-
-    .game-title {
-        font-size: 18px;
-    }
-
-    .game-desc {
-        font-size: 13px;
-    }
-
-    /* Statistiques */
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-    }
-
-    .stat-card {
-        padding: 12px;
-    }
-
-    .stat-value {
-        font-size: 20px;
-    }
-
+    
     /* Clicker */
     .clicker-container {
         grid-template-columns: 1fr;
-        gap: 20px;
     }
-
+    
     .click-button {
-        width: 220px;
-        height: 220px;
+        width: 200px;
+        height: 200px;
     }
-
-    .click-value {
-        font-size: 28px;
-    }
-
-    .click-icon {
-        font-size: 60px;
-    }
-
-    .click-text {
-        font-size: 20px;
-    }
-
-    .upgrade-card {
-        padding: 14px;
-    }
-
-    /* BlackJack */
-    .cards {
-        gap: 8px;
-    }
-
-    .card {
-        width: 60px;
-        height: 85px;
-        font-size: 24px;
-    }
-
-    /* Roulette */
-    .roulette-wheel {
-        width: 300px;
-        height: 300px;
-    }
-
-    .roulette-center {
-        width: 60px;
-        height: 60px;
-        font-size: 24px;
-    }
-
-    .color-btn {
-        width: 80px;
-        height: 80px;
-        font-size: 14px;
-    }
-
-    /* MineBomb */
-    .minebomb-grid {
-        max-width: 350px;
-        gap: 10px;
-    }
-
-    .mine-cell {
-        font-size: 24px;
-    }
-
-    .multiplier-display {
-        font-size: 32px;
-    }
-
-    /* Slots */
-    .slots-display {
-        gap: 16px;
-        padding: 24px;
-    }
-
-    .slot-reel {
-        width: 80px;
-        height: 80px;
-        font-size: 48px;
-    }
-
-    .paytable-row {
-        font-size: 14px;
-        padding: 6px;
-    }
-
-    /* Inputs et boutons */
-    .input-group input,
-    .input-group select {
-        max-width: 100%;
-        font-size: 16px;
-    }
-
-    .btn {
-        padding: 12px 24px;
-        font-size: 15px;
-    }
-
+    
     /* Tables */
     .leaderboard-table {
-        font-size: 13px;
+        font-size: 12px;
     }
-
+    
     .leaderboard-table th,
     .leaderboard-table td {
-        padding: 10px 12px;
+        padding: 8px;
     }
-
-    /* Profil */
+    
+    /* Social page */
+    .tabs {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .tab {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    .search-bar {
+        margin-bottom: 20px;
+    }
+    
+    .users-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .user-card {
+        padding: 16px;
+    }
+    
+    /* Clans page */
+    .create-clan-section {
+        padding: 24px 20px;
+    }
+    
+    .create-clan-section h2 {
+        font-size: 24px;
+    }
+    
+    .create-clan-section .price {
+        font-size: 36px;
+    }
+    
+    .clans-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    /* Profile page */
     .profile-header {
         flex-direction: column;
         text-align: center;
-        padding: 24px;
+        padding: 24px 16px;
     }
-
+    
     .profile-avatar {
         width: 80px;
         height: 80px;
         font-size: 40px;
     }
-
+    
     .profile-info h1 {
         font-size: 24px;
     }
-
+    
     .stats-overview {
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
     }
-
+    
     .stat-card-large {
         padding: 16px;
     }
-
+    
+    .stat-icon {
+        font-size: 24px;
+    }
+    
     .stat-card-large .stat-value {
-        font-size: 24px;
-    }
-}
-
-/* Petits smartphones (iPhone SE, etc.) */
-@media (max-width: 480px) {
-    /* Header encore plus compact */
-    .header {
-        padding: 12px;
-    }
-
-    .logo img {
-        width: 60px;
-    }
-
-    .header-right {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .money-display,
-    .income-display {
-        width: 100%;
-        justify-content: center;
-        padding: 10px;
-        font-size: 16px;
-    }
-
-    .reset-btn {
-        width: 100%;
-        justify-content: center;
-        padding: 10px;
-        font-size: 14px;
-    }
-
-    /* Menu en colonne unique */
-    .menu-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-
-    .game-card {
-        min-height: 280px;
-        padding: 20px;
-    }
-
-    .game-logo {
-        width: 140px;
-        height: 140px;
-    }
-
-    .game-title {
         font-size: 20px;
     }
-
-    /* Message de bienvenue */
-    .welcome-message {
-        font-size: 14px;
-        padding: 12px 16px;
-    }
-
-    /* Statistiques en une colonne */
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .stats-overview {
-        grid-template-columns: 1fr;
-    }
-
-    /* Clicker plus petit */
-    .click-button {
-        width: 200px;
-        height: 200px;
-    }
-
-    .click-value {
-        font-size: 24px;
-    }
-
-    .click-icon img {
-        width: 150px !important;
-    }
-
-    .click-text {
-        font-size: 18px;
-    }
-
-    /* Upgrades */
-    .upgrades-section {
-        padding: 16px;
-    }
-
-    .upgrade-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
-
-    .upgrade-footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    .upgrade-btn {
-        width: 100%;
-    }
-
-    /* BlackJack */
-    .blackjack-table {
-        padding: 16px;
-    }
-
-    .card {
-        width: 50px;
-        height: 70px;
-        font-size: 20px;
-    }
-
-    /* Roulette */
-    .roulette-wheel {
-        width: 250px;
-        height: 250px;
-    }
-
-    .color-buttons {
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .color-btn {
-        width: 100%;
-        height: 60px;
-        border-radius: 12px;
-    }
-
-    /* MineBomb */
-    .minebomb-grid {
-        max-width: 280px;
-        gap: 8px;
-    }
-
-    .mine-cell {
-        font-size: 20px;
-    }
-
-    .mb-game-info {
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .multiplier-display {
-        font-size: 28px;
-    }
-
-    /* Slots */
-    .slots-display {
-        gap: 12px;
-        padding: 20px;
-    }
-
-    .slot-reel {
-        width: 70px;
-        height: 70px;
-        font-size: 40px;
-    }
-
-    .paytable-row {
-        font-size: 13px;
-    }
-
-    /* Messages */
-    .message {
-        font-size: 14px;
-        padding: 12px;
-    }
-
-    /* Boutons */
-    .btn {
-        padding: 12px 20px;
-        font-size: 14px;
-    }
-
-    .back-btn {
-        padding: 8px 16px;
-        font-size: 13px;
-    }
-
-    /* Tables - scroll horizontal */
-    .leaderboard-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .leaderboard-table {
-        min-width: 500px;
-        font-size: 12px;
-    }
-
-    .leaderboard-table th,
-    .leaderboard-table td {
-        padding: 8px 10px;
-    }
-
-    /* Admin */
-    .admin-stats {
-        grid-template-columns: 1fr;
-    }
-
-    .users-table {
-        overflow-x: auto;
-    }
-
-    table {
-        min-width: 600px;
-    }
-
-    /* Profil */
-    .profile-container {
-        padding: 20px 15px;
-    }
-
-    .profile-header {
-        padding: 20px;
-    }
-
-    .profile-info h1 {
-        font-size: 22px;
-    }
-
+    
     .chart-container {
-        height: 220px;
-        padding: 10px;
+        height: 250px;
+        padding: 15px;
     }
-
+    
     .achievements-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
-
-    /* Login/Register */
-    .login-container,
-    .register-container {
-        padding: 32px 20px;
+    
+    .achievement-card {
+        padding: 12px;
     }
-
-    .logo h1 {
-        font-size: 28px;
-    }
-
-    .features {
-        grid-template-columns: 1fr;
-    }
-
-    .welcome-bonus .bonus-amount {
-        font-size: 32px;
-    }
-}
-
-/* Très petits écrans (old phones) */
-@media (max-width: 360px) {
-    .container {
-        padding: 20px 10px;
-    }
-
-    .game-card {
-        padding: 16px;
-    }
-
-    .game-logo {
-        width: 120px;
-        height: 120px;
-    }
-
-    .click-button {
-        width: 180px;
-        height: 180px;
-    }
-
-    .roulette-wheel {
-        width: 220px;
-        height: 220px;
-    }
-
-    .minebomb-grid {
-        max-width: 250px;
-    }
-
-    .slot-reel {
-        width: 60px;
-        height: 60px;
+    
+    .achievement-icon {
         font-size: 36px;
     }
-}
-
-/* Mode paysage sur mobile */
-@media (max-height: 600px) and (orientation: landscape) {
-    .header {
-        padding: 10px;
+    
+    /* Clan detail page */
+    .clan-header {
+        padding: 24px 16px;
     }
-
-    .game-card {
-        min-height: auto;
+    
+    .clan-header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .clan-badge-large {
+        width: 80px;
+        height: 80px;
+        font-size: 36px;
+    }
+    
+    .clan-header-info h1 {
+        font-size: 24px;
+    }
+    
+    .clan-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .clan-stat-card {
         padding: 16px;
     }
-
-    .game-logo {
-        width: 100px;
-        height: 100px;
+    
+    .clan-stat-icon {
+        font-size: 24px;
     }
-
-    .click-button {
-        width: 180px;
-        height: 180px;
+    
+    .clan-stat-value {
+        font-size: 20px;
     }
-
-    .roulette-wheel {
-        width: 250px;
-        height: 250px;
+    
+    .clan-actions {
+        flex-direction: column;
+        gap: 8px;
     }
-
-    .profile-header {
-        padding: 16px;
+    
+    .btn-clan-action {
+        width: 100%;
     }
-}
-
-/* Touch improvements pour mobile */
-@media (hover: none) and (pointer: coarse) {
-    /* Augmenter les zones tactiles */
-    .btn,
-    .reset-btn,
-    .upgrade-btn,
-    .action-btn {
-        min-height: 44px;
-        padding: 12px 20px;
+    
+    .members-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
     }
-
-    .mine-cell {
-        min-height: 44px;
+    
+    .member-card {
+        padding: 12px;
     }
-
-    .color-btn {
-        min-height: 60px;
-    }
-
-    /* Désactiver les effets hover sur mobile */
-    .game-card:hover,
-    .btn:hover,
-    .mine-cell:hover {
-        transform: none;
-    }
-
-    /* Meilleur feedback tactile */
-    .btn:active,
-    .reset-btn:active,
-    .upgrade-btn:active {
-        transform: scale(0.95);
-    }
-
-    .game-card:active {
-        transform: scale(0.98);
-    }
-}
-
-/* Amélioration du scroll sur mobile */
-@media (max-width: 768px) {
-    body {
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* Scroll doux pour les tables */
-    .leaderboard-container,
-    .users-table {
-        -webkit-overflow-scrolling: touch;
-        scroll-behavior: smooth;
-    }
-}
-
-/* Notifications adaptées mobile */
-@media (max-width: 480px) {
-    .notification {
-        top: 10px;
-        right: 10px;
-        left: 10px;
-        padding: 12px 16px;
-        font-size: 14px;
-    }
-}
-
-/* Modal adapté mobile */
-@media (max-width: 480px) {
+    
+    /* Modals */
     .modal-content {
         width: 95%;
-        padding: 24px;
-        margin: 0 10px;
+        max-width: 95%;
+        padding: 24px 16px;
     }
-
+    
     .modal-header {
         font-size: 20px;
     }
-
-    .modal-input {
-        padding: 10px;
-        font-size: 16px;
+    
+    .modal-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .modal-buttons button {
+        width: 100%;
+    }
+    
+    /* Admin page */
+    .admin-header {
+        padding: 20px 16px;
+    }
+    
+    .admin-header h1 {
+        font-size: 24px;
+    }
+    
+    .admin-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .stat-box {
+        padding: 16px;
+    }
+    
+    .stat-box .value {
+        font-size: 20px;
+    }
+    
+    .users-table {
+        padding: 16px;
+        overflow-x: auto;
+    }
+    
+    table {
+        font-size: 12px;
+    }
+    
+    th, td {
+        padding: 8px;
+    }
+    
+    .action-btn {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+    
+    /* Empty states */
+    .empty-state {
+        padding: 40px 20px;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+    }
+    
+    /* Notifications */
+    .notification {
+        right: 10px;
+        left: 10px;
+        max-width: calc(100% - 20px);
     }
 }

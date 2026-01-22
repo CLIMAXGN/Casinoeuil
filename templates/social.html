@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social - Casinoeuil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .social-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            border-bottom: 2px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+
+        .tab:hover {
+            color: #cbd5e1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-bar {
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 14px 20px;
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .user-card {
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .user-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-4px);
+        }
+
+        .user-card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .user-info h3 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-online {
+            background: #22c55e;
+        }
+
+        .status-offline {
+            background: #64748b;
+        }
+
+        .user-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .user-stat {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .user-stat-label {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .user-stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f59e0b;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-friend {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-add {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-add:hover {
+            background: #2563eb;
+        }
+
+        .btn-pending {
+            background: #64748b;
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .btn-remove {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-remove:hover {
+            background: #dc2626;
+        }
+
+        .btn-accept {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-accept:hover {
+            background: #16a34a;
+        }
+
+        .btn-view {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+        }
+
+        .btn-view:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 2000;
+            display: none;
+        }
+
+        .notification.success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .notification.error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+
+    <div class="sidebar">
+    <div class="sidebar-logo">
+        <img src="https://github.com/user-attachments/assets/d29729d4-da3d-4b22-a951-cbc7fc0d02ca" alt="Logo" style="width: 50px; height: auto;">
+    </div>
+    
+    <div class="sidebar-header">
+    <div class="sidebar-money">
+        <div class="sidebar-money-value">{{ current_user.money }} $</div>
+    </div>
+    <div class="sidebar-income" id="sidebarIncome">+0 $/s</div>
+</div>
+    
+    <div class="sidebar-menu">
+        <a href="/" class="sidebar-item">
+            <span class="sidebar-icon">🏠</span>
+            <span class="sidebar-text">Accueil</span>
+        </a>
+        
+        <a href="/social" class="sidebar-item active">
+    <span class="sidebar-icon">👥</span>
+    <span class="sidebar-text">Amis</span>
+</a>
+        
+        <a href="/clans" class="sidebar-item">
+            <span class="sidebar-icon">🏰</span>
+            <span class="sidebar-text">Clans</span>
+        </a>
+        
+        <a href="/profile" class="sidebar-item">
+            <span class="sidebar-icon">👤</span>
+            <span class="sidebar-text">Profil</span>
+        </a>
+        
+        {% if current_user.username == 'archibogue88' %}
+        <a href="/admin/users" class="sidebar-item">
+            <span class="sidebar-icon">🔧</span>
+            <span class="sidebar-text">Admin</span>
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="sidebar-footer">
+        <a href="/logout" class="sidebar-item logout">
+            <span class="sidebar-icon">🚪</span>
+            <span class="sidebar-text">Déconnexion</span>
+        </a>
+    </div>
+</div>
+
+    <div class="social-container" style="padding-left: calc(220px + 40px); padding-right: 40px; margin-left: auto; margin-right: auto;">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('friends')">👥 Mes Amis</button>
+            <button class="tab" onclick="switchTab('requests')">📨 Demandes (<span id="requestCount">0</span>)</button>
+            <button class="tab" onclick="switchTab('search')">🔍 Rechercher</button>
+        </div>
+
+        <!-- MES AMIS -->
+        <div id="friends-tab" class="tab-content active">
+            <h2 style="margin-bottom: 24px; color: #cbd5e1;">👥 Mes Amis</h2>
+            <div class="users-grid" id="friendsList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">⏳</div>
+                    <p>Chargement...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEMANDES -->
+        <div id="requests-tab" class="tab-content">
+            <h2 style="margin-bottom: 24px; color: #cbd5e1;">📨 Demandes d'amis</h2>
+            <div class="users-grid" id="requestsList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">⏳</div>
+                    <p>Chargement...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECHERCHE -->
+        <div id="search-tab" class="tab-content">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Rechercher un utilisateur..." onkeyup="searchUsers()">
+            </div>
+            <div class="users-grid" id="searchResults">
+                <div class="empty-state">
+                    <div class="empty-state-icon">🔍</div>
+                    <p>Tapez au moins 2 caractères pour rechercher</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatMoney(amount) {
+        if (amount >= 1000000000) {
+            return (amount / 1000000000).toFixed(1) + 'B';
+        } else if (amount >= 1000000) {
+            return (amount / 1000000).toFixed(1) + 'M';
+        } else if (amount >= 1000) {
+            return (amount / 1000).toFixed(1) + 'K';
+        }
+        return amount.toString();
+    }
+
+        let searchTimeout;
+
+        function showNotification(message, type = 'success') {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.className = `notification ${type} show`;
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3000);
+        }
+
+        function switchTab(tab) {
+            // Désactiver tous les tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Activer le tab sélectionné
+            document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+            
+            // Charger les données
+            if (tab === 'friends') loadFriends();
+            else if (tab === 'requests') loadRequests();
+        }
+
+        async function loadFriends() {
+        try {
+            const response = await fetch('/api/friends/list');
+            const friends = await response.json();
+            
+            const container = document.getElementById('friendsList');
+            
+            if (friends.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">😢</div>
+                        <p>Vous n'avez pas encore d'amis</p>
+                        <p style="color: #64748b; font-size: 14px; margin-top: 8px;">
+                            Allez dans l'onglet Rechercher pour en ajouter !
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = friends.map(friend => `
+                <div class="user-card" onclick="viewProfile(${friend.id})">
+                    <div class="user-card-header">
+                        <div class="user-avatar">👤</div>
+                        <div class="user-info">
+                            <h3>${friend.username}</h3>
+                            <div class="user-status">
+                                <div class="status-indicator ${friend.is_online ? 'status-online' : 'status-offline'}"></div>
+                                ${friend.is_online ? 'En ligne' : 'Hors ligne'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="user-stats">
+                        <div class="user-stat">
+                            <div class="user-stat-label">Argent</div>
+                            <div class="user-stat-value">${formatMoney(friend.money)} $</div>
+                        </div>
+                        <div class="user-stat">
+                            <div class="user-stat-label">Taux victoire</div>
+                            <div class="user-stat-value">${friend.win_rate}%</div>
+                        </div>
+                    </div>
+                    <div class="user-actions" onclick="event.stopPropagation()">
+                        <button class="btn-friend btn-view" onclick="viewProfile(${friend.id})">Voir profil</button>
+                        <button class="btn-friend btn-remove" onclick="removeFriend(${friend.id})">Retirer</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Erreur:', error);
+        }
+    }
+
+        async function loadRequests() {
+            try {
+                const response = await fetch('/api/friends/requests');
+                const requests = await response.json();
+                
+                document.getElementById('requestCount').textContent = requests.length;
+                
+                const container = document.getElementById('requestsList');
+                
+                if (requests.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <div class="empty-state-icon">📭</div>
+                            <p>Aucune demande d'ami</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = requests.map(req => `
+                    <div class="user-card">
+                        <div class="user-card-header">
+                            <div class="user-avatar">👤</div>
+                            <div class="user-info">
+                                <h3>${req.username}</h3>
+                            </div>
+                        </div>
+                        <div class="user-actions">
+                            <button class="btn-friend btn-accept" onclick="acceptRequest(${req.id})">✅ Accepter</button>
+                            <button class="btn-friend btn-remove" onclick="rejectRequest(${req.id})">❌ Refuser</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        function searchUsers() {
+        clearTimeout(searchTimeout);
+        
+        const query = document.getElementById('searchInput').value.trim();
+        
+        if (query.length < 2) {
+            document.getElementById('searchResults').innerHTML = `
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <div class="empty-state-icon">🔍</div>
+                    <p>Tapez au moins 2 caractères pour rechercher</p>
+                </div>
+            `;
+            return;
+        }
+        
+        searchTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+                const users = await response.json();
+                
+                const container = document.getElementById('searchResults');
+                
+                if (users.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <div class="empty-state-icon">😕</div>
+                            <p>Aucun utilisateur trouvé</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = users.map(user => {
+                    let actionBtn = '';
+                    if (user.is_friend) {
+                        actionBtn = `<button class="btn-friend btn-pending">✅ Ami</button>`;
+                    } else if (user.request_sent) {
+                        actionBtn = `<button class="btn-friend btn-pending">⏳ En attente</button>`;
+                    } else {
+                        actionBtn = `<button class="btn-friend btn-add" onclick="sendRequest(${user.id})">➕ Ajouter</button>`;
+                    }
+                    
+                    return `
+                        <div class="user-card" onclick="viewProfile(${user.id})">
+                            <div class="user-card-header">
+                                <div class="user-avatar">👤</div>
+                                <div class="user-info">
+                                    <h3>${user.username} ${user.clan_tag ? `<span style="color: #f59e0b;">[${user.clan_tag}]</span>` : ''}</h3>
+                                    ${user.favorite_game ? `<div style="font-size: 13px; color: #94a3b8;">Jeu préféré: ${user.favorite_game}</div>` : ''}
+                                </div>
+                            </div>
+                            ${user.money !== null ? `
+                            <div class="user-stat">
+                                <div class="user-stat-label">Argent</div>
+                                <div class="user-stat-value">${formatMoney(user.money)} $</div>
+                            </div>
+                            ` : ''}
+                            <div class="user-actions" onclick="event.stopPropagation()">
+                                <button class="btn-friend btn-view" onclick="viewProfile(${user.id})">Voir profil</button>
+                                ${actionBtn}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }, 300);
+    }
+
+        async function sendRequest(userId) {
+            try {
+                const response = await fetch(`/api/friends/send/${userId}`, {method: 'POST'});
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    searchUsers();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erreur de connexion', 'error');
+            }
+        }
+
+        async function acceptRequest(userId) {
+            try {
+                const response = await fetch(`/api/friends/accept/${userId}`, {method: 'POST'});
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    loadRequests();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erreur de connexion', 'error');
+            }
+        }
+
+        async function rejectRequest(userId) {
+            try {
+                const response = await fetch(`/api/friends/reject/${userId}`, {method: 'POST'});
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    loadRequests();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erreur de connexion', 'error');
+            }
+        }
+
+        async function removeFriend(userId) {
+            if (!confirm('Voulez-vous vraiment retirer cet ami ?')) return;
+            
+            try {
+                const response = await fetch(`/api/friends/remove/${userId}`, {method: 'POST'});
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    loadFriends();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erreur de connexion', 'error');
+            }
+        }
+
+        function viewProfile(userId) {
+            window.location.href = `/profile/user/${userId}`;
+        }
+
+        // Charger les amis au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFriends();
+            loadRequests();
+        });
+
+
+        function formatMoney(amount) {
+    if (amount >= 1000000000) {
+        return (amount / 1000000000).toFixed(1) + 'B';
+    } else if (amount >= 1000000) {
+        return (amount / 1000000).toFixed(1) + 'M';
+    } else if (amount >= 1000) {
+        return (amount / 1000).toFixed(1) + 'K';
+    }
+    return amount.toString();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const moneyEl = document.querySelector('.sidebar-money-value');
+    if (moneyEl) {
+        const amount = parseInt(moneyEl.textContent.replace(/[^0-9]/g, ''));
+        moneyEl.textContent = formatMoney(amount) + ' $';
+    }
+});
+    </script>
+</body>
+</html>

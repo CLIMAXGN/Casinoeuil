@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil de {{ profile_user.username }} - Casinoeuil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .profile-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .profile-info h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .profile-info .member-since {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .profile-bio {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-style: italic;
+        }
+
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card-large {
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card-large .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #f59e0b;
+            margin-bottom: 4px;
+        }
+
+        .stat-card-large .stat-label {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-add-friend {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-add-friend:hover {
+            background: #2563eb;
+        }
+
+        .btn-remove-friend {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-remove-friend:hover {
+            background: #dc2626;
+        }
+
+        .btn-pending {
+            background: #64748b;
+            color: white;
+            cursor: not-allowed;
+        }
+
+        .btn-is-friend {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid #22c55e;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 24px;
+        }
+
+        .back-btn:hover {
+            background: #334155;
+        }
+
+        .clan-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 2000;
+            display: none;
+        }
+
+        .notification.success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .notification.error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+
+    <div class="sidebar">
+    <div class="sidebar-logo">
+        <img src="https://github.com/user-attachments/assets/d29729d4-da3d-4b22-a951-cbc7fc0d02ca" alt="Logo" style="width: 50px; height: auto;">
+    </div>
+    
+    <div class="sidebar-header">
+    <div class="sidebar-money">
+        <div class="sidebar-money-value">{{ current_user.money }} $</div>
+    </div>
+    <div class="sidebar-income" id="sidebarIncome">+0 $/s</div>
+</div>
+    
+    <div class="sidebar-menu">
+        <a href="/" class="sidebar-item">
+            <span class="sidebar-icon">🏠</span>
+            <span class="sidebar-text">Accueil</span>
+        </a>
+        
+        <a href="/social" class="sidebar-item active">
+            <span class="sidebar-icon">👥</span>
+            <span class="sidebar-text">Amis</span>
+        </a>
+        
+        <a href="/clans" class="sidebar-item">
+            <span class="sidebar-icon">🏰</span>
+            <span class="sidebar-text">Clans</span>
+        </a>
+        
+        <a href="/profile" class="sidebar-item">
+            <span class="sidebar-icon">👤</span>
+            <span class="sidebar-text">Profil</span>
+        </a>
+        
+        {% if current_user.username == 'archibogue88' %}
+        <a href="/admin/users" class="sidebar-item">
+            <span class="sidebar-icon">🔧</span>
+            <span class="sidebar-text">Admin</span>
+        </a>
+        {% endif %}
+    </div>
+    
+    <div class="sidebar-footer">
+        <a href="/logout" class="sidebar-item logout">
+            <span class="sidebar-icon">🚪</span>
+            <span class="sidebar-text">Déconnexion</span>
+        </a>
+    </div>
+</div>
+
+    <div class="profile-container" style="padding-left: calc(220px + 40px); padding-right: 40px; margin-left: auto; margin-right: auto;">
+        <a href="/social" class="back-btn">← Retour</a>
+
+        <div class="profile-header">
+            <div class="profile-avatar">👤</div>
+            <div class="profile-info">
+                <h1 id="username">{{ profile_user.username }}</h1>
+                <div class="member-since" id="memberSince">
+                    Membre depuis le {{ profile_user.created_at.strftime('%d/%m/%Y') }}
+                </div>
+                <div id="bioSection"></div>
+                <div id="clanBadge"></div>
+                <div class="action-buttons" id="actionButtons"></div>
+            </div>
+        </div>
+
+        <div class="stats-overview" id="statsOverview">
+            <!-- Sera rempli dynamiquement -->
+        </div>
+    </div>
+
+    <script>
+    const userId = {{ profile_user.id }};
+
+    function formatMoney(amount) {
+        if (amount >= 1000000000) {
+            return (amount / 1000000000).toFixed(1) + 'B';
+        } else if (amount >= 1000000) {
+            return (amount / 1000000).toFixed(1) + 'M';
+        } else if (amount >= 1000) {
+            return (amount / 1000).toFixed(1) + 'K';
+        }
+        return amount.toString();
+    }
+
+    function showNotification(message, type = 'success') {
+        const notif = document.getElementById('notification');
+        notif.textContent = message;
+        notif.className = `notification ${type} show`;
+        setTimeout(() => {
+            notif.classList.remove('show');
+        }, 3000);
+    }
+
+    // Formater l'argent de la sidebar au chargement
+    async function loadSidebarData() {
+        // Formater l'argent
+        const sidebarMoney = document.querySelector('.sidebar-money-value');
+        if (sidebarMoney) {
+            const amount = parseInt(sidebarMoney.textContent.replace(/[^0-9]/g, ''));
+            sidebarMoney.textContent = formatMoney(amount) + ' $';
+        }
+        
+        // Charger le revenu passif
+        try {
+            const response = await fetch('/api/clicker/get_data');
+            const data = await response.json();
+            
+            const incomeEl = document.getElementById('sidebarIncome');
+            if (incomeEl) {
+                incomeEl.textContent = '+' + data.passiveIncome + ' $/s';
+            }
+        } catch (error) {
+            console.error('Erreur:', error);
+        }
+    }
+
+    async function loadProfile() {
+        try {
+            const response = await fetch(`/api/profile/${userId}`);
+            const profile = await response.json();
+
+            if (profile.bio) {
+                document.getElementById('bioSection').innerHTML = `
+                    <div class="profile-bio">${profile.bio}</div>
+                `;
+            }
+
+            if (profile.clan) {
+                document.getElementById('clanBadge').innerHTML = `
+                    <div class="clan-badge">[${profile.clan.tag}] ${profile.clan.name}</div>
+                `;
+            }
+
+            const actionButtons = document.getElementById('actionButtons');
+            if (profile.is_self) {
+                actionButtons.innerHTML = `
+                    <a href="/profile" class="btn-action btn-add-friend">Modifier mon profil</a>
+                `;
+            } else if (profile.is_friend) {
+                actionButtons.innerHTML = `
+                    <button class="btn-action btn-is-friend">✅ Ami</button>
+                    <button class="btn-action btn-remove-friend" onclick="removeFriend()">Retirer</button>
+                `;
+            } else if (profile.request_sent) {
+                actionButtons.innerHTML = `
+                    <button class="btn-action btn-pending">⏳ Demande envoyée</button>
+                `;
+            } else if (profile.request_received) {
+                actionButtons.innerHTML = `
+                    <button class="btn-action btn-add-friend" onclick="acceptRequest()">✅ Accepter</button>
+                    <button class="btn-action btn-remove-friend" onclick="rejectRequest()">❌ Refuser</button>
+                `;
+            } else {
+                actionButtons.innerHTML = `
+                    <button class="btn-action btn-add-friend" onclick="sendRequest()">➕ Ajouter en ami</button>
+                `;
+            }
+
+            const stats = document.getElementById('statsOverview');
+            stats.innerHTML = `
+                ${profile.money !== null ? `
+                <div class="stat-card-large">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value">${formatMoney(profile.money)} $</div>
+                    <div class="stat-label">Argent</div>
+                </div>
+                ` : ''}
+                <div class="stat-card-large">
+                    <div class="stat-icon">🎮</div>
+                    <div class="stat-value">${profile.total_games}</div>
+                    <div class="stat-label">Parties jouées</div>
+                </div>
+                <div class="stat-card-large">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-value">${profile.total_wins}</div>
+                    <div class="stat-label">Victoires</div>
+                </div>
+                <div class="stat-card-large">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value">${profile.win_rate}%</div>
+                    <div class="stat-label">Taux de victoire</div>
+                </div>
+                <div class="stat-card-large">
+                    <div class="stat-icon">🏅</div>
+                    <div class="stat-value">${profile.achievements_count}</div>
+                    <div class="stat-label">Achievements</div>
+                </div>
+                ${profile.favorite_game ? `
+                <div class="stat-card-large">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value">${profile.favorite_game}</div>
+                    <div class="stat-label">Jeu préféré</div>
+                </div>
+                ` : ''}
+            `;
+
+        } catch (error) {
+            console.error('Erreur:', error);
+            showNotification('Erreur de chargement', 'error');
+        }
+    }
+
+    async function sendRequest() {
+        try {
+            const response = await fetch(`/api/friends/send/${userId}`, {method: 'POST'});
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification(data.message, 'success');
+                loadProfile();
+            } else {
+                showNotification(data.error, 'error');
+            }
+        } catch (error) {
+            showNotification('Erreur de connexion', 'error');
+        }
+    }
+
+    async function acceptRequest() {
+        try {
+            const response = await fetch(`/api/friends/accept/${userId}`, {method: 'POST'});
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification(data.message, 'success');
+                loadProfile();
+            } else {
+                showNotification(data.error, 'error');
+            }
+        } catch (error) {
+            showNotification('Erreur de connexion', 'error');
+        }
+    }
+
+    async function rejectRequest() {
+        try {
+            const response = await fetch(`/api/friends/reject/${userId}`, {method: 'POST'});
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification(data.message, 'success');
+                window.location.href = '/social';
+            } else {
+                showNotification(data.error, 'error');
+            }
+        } catch (error) {
+            showNotification('Erreur de connexion', 'error');
+        }
+    }
+
+    async function removeFriend() {
+        if (!confirm('Voulez-vous vraiment retirer cet ami ?')) return;
+        
+        try {
+            const response = await fetch(`/api/friends/remove/${userId}`, {method: 'POST'});
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification(data.message, 'success');
+                loadProfile();
+            } else {
+                showNotification(data.error, 'error');
+            }
+        } catch (error) {
+            showNotification('Erreur de connexion', 'error');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProfile();
+        loadSidebarData();
+    });
+</script>
+</body>
+</html>

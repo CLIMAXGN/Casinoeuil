@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clan - Casinoeuil</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .clan-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .clan-header {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .clan-header-content {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .clan-badge-large {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .clan-header-info h1 {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .clan-header-info .leader {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .clan-description {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-style: italic;
+        }
+
+        .clan-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .clan-stat-card {
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .clan-stat-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .clan-stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #f59e0b;
+            margin-bottom: 4px;
+        }
+
+        .clan-stat-label {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .clan-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-clan-action {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-join {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-join:hover {
+            background: #16a34a;
+        }
+
+        .btn-leave {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-leave:hover {
+            background: #dc2626;
+        }
+
+        .btn-donate {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-donate:hover {
+            background: #2563eb;
+        }
+
+        .section {
+            background: #1e293b;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .section h2 {
+            color: #f59e0b;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .member-card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.3s;
+        }
+
+        .member-card:hover {
+            border-color: #f59e0b;
+        }
+
+        .member-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .member-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .member-info h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .member-role {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .role-leader {
+            background: #fbbf24;
+            color: #000;
+        }
+
+        .role-officer {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .role-member {
+            background: #64748b;
+            color: white;
+        }
+
+        .member-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            font-size: 12px;
+        }
+
+        .member-stat {
+            color: #94a3b8;
+        }
+
+        .member-stat strong {
+            color: #f59e0b;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 32px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #f59e0b;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 2000;
+            display: none;
+        }
+
+        .notification.success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .notification.error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-bottom: 24px;
+        }
+
+        .back-btn:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="https://github.com/user-attachments/assets/d29729d4-da3d-4b22-a951-cbc7fc0d02ca" alt="Logo" style="width: 50px; height: auto;">
+        </div>
+        
+        <div class="sidebar-header">
+    <div class="sidebar-money">
+        <div class="sidebar-money-value">{{ current_user.money }} $</div>
+    </div>
+    <div class="sidebar-income" id="sidebarIncome">+0 $/s</div>
+</div>
+        
+        <div class="sidebar-menu">
+            <a href="/" class="sidebar-item">
+                <span class="sidebar-icon">🏠</span>
+                <span class="sidebar-text">Accueil</span>
+            </a>
+            
+            <a href="/social" class="sidebar-item">
+                <span class="sidebar-icon">👥</span>
+                <span class="sidebar-text">Amis</span>
+            </a>
+            
+            <a href="/clans" class="sidebar-item active">
+                <span class="sidebar-icon">🏰</span>
+                <span class="sidebar-text">Clans</span>
+            </a>
+            
+            <a href="/profile" class="sidebar-item">
+                <span class="sidebar-icon">👤</span>
+                <span class="sidebar-text">Profil</span>
+            </a>
+            
+            {% if current_user.username == 'archibogue88' %}
+            <a href="/admin/users" class="sidebar-item">
+                <span class="sidebar-icon">🔧</span>
+                <span class="sidebar-text">Admin</span>
+            </a>
+            {% endif %}
+        </div>
+        
+        <div class="sidebar-footer">
+            <a href="/logout" class="sidebar-item logout">
+                <span class="sidebar-icon">🚪</span>
+                <span class="sidebar-text">Déconnexion</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="clan-container" style="padding-left: calc(220px + 40px); padding-right: 40px; margin-left: auto; margin-right: auto; max-width: 1400px;">
+        <a href="/clans" class="back-btn">← Retour aux clans</a>
+
+        <div class="clan-header">
+            <div class="clan-header-content">
+                <div class="clan-badge-large" id="clanTag"></div>
+                <div class="clan-header-info">
+                    <h1 id="clanName"></h1>
+                    <div class="leader" id="clanLeader"></div>
+                    <div id="clanDescription"></div>
+                </div>
+            </div>
+            <div class="clan-actions" id="clanActions"></div>
+        </div>
+
+        <div class="clan-stats-grid">
+            <div class="clan-stat-card">
+                <div class="clan-stat-icon">👥</div>
+                <div class="clan-stat-value" id="memberCount">0</div>
+                <div class="clan-stat-label">Membres</div>
+            </div>
+            <div class="clan-stat-card">
+                <div class="clan-stat-icon">💰</div>
+                <div class="clan-stat-value" id="totalMoney">0 $</div>
+                <div class="clan-stat-label">Argent Total</div>
+            </div>
+            <div class="clan-stat-card">
+                <div class="clan-stat-icon">🏦</div>
+                <div class="clan-stat-value" id="bankMoney">0 $</div>
+                <div class="clan-stat-label">Banque du Clan</div>
+            </div>
+            <div class="clan-stat-card">
+                <div class="clan-stat-icon">📅</div>
+                <div class="clan-stat-value" id="createdAt"></div>
+                <div class="clan-stat-label">Créé le</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>👥 Membres</h2>
+            <div class="members-grid" id="membersList"></div>
+        </div>
+    </div>
+
+    <!-- Modal Donation -->
+    <div class="modal" id="donateModal">
+        <div class="modal-content">
+            <div class="modal-header">💰 Donner à la banque du clan</div>
+            <input type="number" class="modal-input" id="donateAmount" placeholder="Montant" min="1">
+            <div class="modal-buttons">
+                <button class="btn-clan-action" style="background: #64748b;" onclick="closeModal()">Annuler</button>
+                <button class="btn-clan-action btn-donate" onclick="confirmDonation()">Donner</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Retrait -->
+    <div class="modal" id="withdrawModal">
+        <div class="modal-content">
+            <div class="modal-header">💸 Retirer de la banque du clan</div>
+            <p style="color: #ef4444; margin-bottom: 12px; font-size: 13px;">
+                ⚠️ En tant que chef, vous pouvez retirer de l'argent de la banque
+            </p>
+            <p style="color: #94a3b8; margin-bottom: 16px;">
+                Banque actuelle: <strong id="withdrawBankAmount">0 $</strong>
+            </p>
+            <input type="number" class="modal-input" id="withdrawAmount" placeholder="Montant à retirer" min="1">
+            <div class="modal-buttons">
+                <button class="btn-clan-action" style="background: #64748b;" onclick="closeModal()">Annuler</button>
+                <button class="btn-clan-action" style="background: #f59e0b;" onclick="confirmWithdraw()">Retirer</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const clanId = {{ clan_id }};
+        let clanData = null;
+
+        function formatMoney(amount) {
+            if (amount >= 1000000000) {
+                return (amount / 1000000000).toFixed(1) + 'B';
+            } else if (amount >= 1000000) {
+                return (amount / 1000000).toFixed(1) + 'M';
+            } else if (amount >= 1000) {
+                return (amount / 1000).toFixed(1) + 'K';
+            }
+            return amount.toString();
+        }
+
+        function showNotification(message, type = 'success') {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.className = `notification ${type} show`;
+            setTimeout(() => {
+                notif.classList.remove('show');
+            }, 3000);
+        }
+
+        function closeModal() {
+            document.getElementById('donateModal').classList.remove('active');
+            document.getElementById('withdrawModal').classList.remove('active');
+        }
+
+        async function loadClan() {
+            try {
+                const response = await fetch(`/api/clans/${clanId}`);
+                clanData = await response.json();
+
+                document.getElementById('clanTag').textContent = `[${clanData.tag}]`;
+                document.getElementById('clanName').textContent = clanData.name;
+                document.getElementById('clanLeader').textContent = `Chef : ${clanData.leader_username}`;
+                
+                if (clanData.description) {
+                    document.getElementById('clanDescription').innerHTML = `
+                        <div class="clan-description">${clanData.description}</div>
+                    `;
+                }
+
+                document.getElementById('memberCount').textContent = `${clanData.members_count}/${clanData.max_members}`;
+                document.getElementById('totalMoney').textContent = formatMoney(clanData.total_money) + ' $';
+                document.getElementById('bankMoney').textContent = formatMoney(clanData.bank_money) + ' $';
+                
+                const dateObj = new Date(clanData.created_at);
+                document.getElementById('createdAt').textContent = dateObj.toLocaleDateString('fr-FR');
+
+                // Boutons d'action
+                const actionsDiv = document.getElementById('clanActions');
+                if (clanData.is_member) {
+                    let buttons = '';
+                    
+                    if (!clanData.is_leader) {
+                        buttons += `<button class="btn-clan-action btn-leave" onclick="leaveClan()">Quitter le clan</button>`;
+                    }
+                    
+                    buttons += `<button class="btn-clan-action btn-donate" onclick="openDonateModal()">💰 Faire un don</button>`;
+                    
+                    if (clanData.is_leader) {
+                        buttons += `<button class="btn-clan-action" style="background: #f59e0b;" onclick="openWithdrawModal()">💸 Retirer argent</button>`;
+                    }
+                    
+                    actionsDiv.innerHTML = buttons;
+                } else {
+                    const isFull = clanData.members_count >= clanData.max_members;
+                    if (clanData.is_public && !isFull) {
+                        actionsDiv.innerHTML = `<button class="btn-clan-action btn-join" onclick="joinClan()">Rejoindre le clan</button>`;
+                    } else if (isFull) {
+                        actionsDiv.innerHTML = `<button class="btn-clan-action" style="background: #64748b; cursor: not-allowed;">Clan complet</button>`;
+                    }
+                }
+
+                // Membres
+                const membersDiv = document.getElementById('membersList');
+                if (!clanData.members || clanData.members.length === 0) {
+                    membersDiv.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; color: #64748b; padding: 40px;">
+                            Aucun membre
+                        </div>
+                    `;
+                    return;
+                }
+                
+                membersDiv.innerHTML = clanData.members.map(member => {
+                    let roleClass = 'role-member';
+                    let roleText = 'Membre';
+                    if (member.role === 'leader') {
+                        roleClass = 'role-leader';
+                        roleText = '👑 Chef';
+                    } else if (member.role === 'officer') {
+                        roleClass = 'role-officer';
+                        roleText = '⭐ Officier';
+                    }
+
+                    return `
+                        <div class="member-card">
+                            <div class="member-header">
+                                <div class="member-avatar">👤</div>
+                                <div class="member-info">
+                                    <h3>${member.username}</h3>
+                                    <span class="member-role ${roleClass}">${roleText}</span>
+                                </div>
+                            </div>
+                            <div class="member-stats">
+                                <div class="member-stat">Argent: <strong>${formatMoney(member.money)} $</strong></div>
+                                <div class="member-stat">Victoires: <strong>${member.win_rate}%</strong></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showNotification('Erreur de chargement', 'error');
+            }
+        }
+
+        async function joinClan() {
+            if (!confirm('Rejoindre ce clan ?')) return;
+            
+            try {
+                const response = await fetch(`/api/clans/${clanId}/join`, {method: 'POST'});
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erreur de connexion', 'error');
+            }
+        }
+
+        async function leaveClan() {
+            if (!confirm('Êtes-vous sûr de vouloir quitter ce clan ?')) return;
+            
+            try {
+                const response = await fetch(`/api/clans/${clanId}/leave`, {method: 'POST'});
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    setTimeout(() => window.location.href = '/clans', 1500);
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erreur de connexion', 'error');
+            }
+        }
+
+        function openDonateModal() {
+            document.getElementById('donateModal').classList.add('active');
+            document.getElementById('donateAmount').value = '';
+        }
+
+        async function confirmDonation() {
+            const amount = parseInt(document.getElementById('donateAmount').value);
+            
+            if (!amount || amount <= 0) {
+                showNotification('Montant invalide', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/clans/${clanId}/donate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({amount})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    document.getElementById('userMoney').textContent = formatMoney(data.user_money) + ' $';
+                    closeModal();
+                    loadClan();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erreur de connexion', 'error');
+            }
+        }
+
+        function openWithdrawModal() {
+            document.getElementById('withdrawModal').classList.add('active');
+            document.getElementById('withdrawBankAmount').textContent = formatMoney(clanData.bank_money) + ' $';
+            document.getElementById('withdrawAmount').value = '';
+            document.getElementById('withdrawAmount').max = clanData.bank_money;
+        }
+
+        async function confirmWithdraw() {
+            const amount = parseInt(document.getElementById('withdrawAmount').value);
+            
+            if (!amount || amount <= 0) {
+                showNotification('Montant invalide', 'error');
+                return;
+            }
+            
+            if (amount > clanData.bank_money) {
+                showNotification('Fonds insuffisants dans la banque', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/clans/${clanId}/withdraw`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({amount})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    document.getElementById('userMoney').textContent = formatMoney(data.user_money) + ' $';
+                    closeModal();
+                    loadClan();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erreur de connexion', 'error');
+            }
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal();
+            }
+        }
+
+        // CHARGER LE CLAN AU DÉMARRAGE
+        document.addEventListener('DOMContentLoaded', loadClan);
+    </script>
+</body>
+</html>

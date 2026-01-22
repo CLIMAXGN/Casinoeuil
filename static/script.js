@@ -15,6 +15,31 @@ let autoCost = 150;
 let factoryCost = 800;
 let bankCost = 5000;
 
+// Gestion de la sidebar
+function showMenu() {
+    document.querySelectorAll('.game-screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+    document.getElementById('menu').classList.add('active');
+    
+    // Mettre à jour les items de la sidebar
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    document.querySelector('.sidebar-item[onclick*="showMenu"]').classList.add('active');
+}
+
+function formatMoney(amount) {
+    if (amount >= 1000000000) {
+        return (amount / 1000000000).toFixed(1) + 'B';
+    } else if (amount >= 1000000) {
+        return (amount / 1000000).toFixed(1) + 'M';
+    } else if (amount >= 1000) {
+        return (amount / 1000).toFixed(1) + 'K';
+    }
+    return amount.toString();
+}
+
 // ============================================
 // INITIALISATION
 // ============================================
@@ -22,9 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
     loadStats();
     loadClickerData();
     startPassiveIncome();
-    loadLeaderboard(); // AJOUTÉ : Charger le classement au démarrage
+    loadLeaderboard();
     
-    // CORRECTION : Faire disparaître le message de bienvenue après 4 secondes
+    // Formater l'argent dans la sidebar
+    const sidebarMoney = document.getElementById('sidebarMoney');
+    if (sidebarMoney) {
+        const amount = parseInt(sidebarMoney.textContent.replace(/[^0-9]/g, ''));
+        sidebarMoney.textContent = formatMoney(amount) + ' $';
+    }
+    
+    // Faire disparaître le message de bienvenue
     const welcomeMessage = document.querySelector('.welcome-message');
     if (welcomeMessage) {
         setTimeout(() => {
@@ -137,22 +169,55 @@ async function loadClickerData() {
 }
 
 // ============================================
-// NAVIGATION
+// NAVIGATION - VERSION CORRIGÉE
 // ============================================
 function startGame(game) {
+    // Masquer le menu
     document.getElementById('menu').classList.remove('active');
-    document.getElementById(game).classList.add('active');
-}
-
-function backToMenu() {
+    
+    // Masquer TOUS les autres jeux
     document.querySelectorAll('.game-screen').forEach(screen => {
         screen.classList.remove('active');
     });
+    
+    // Afficher SEULEMENT le jeu sélectionné
+    document.getElementById(game).classList.add('active');
+    
+    // Mettre à jour les items de la sidebar
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Activer l'item correspondant dans la sidebar
+    const sidebarItem = document.querySelector(`.sidebar-item[onclick*="${game}"]`);
+    if (sidebarItem) {
+        sidebarItem.classList.add('active');
+    }
+}
+
+function backToMenu() {
+    // Masquer tous les jeux
+    document.querySelectorAll('.game-screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+    
+    // Afficher le menu
     document.getElementById('menu').classList.add('active');
     
-    // Recharger les stats et le leaderboard
-    loadStats();
-    loadLeaderboard();
+    // Mettre à jour la sidebar
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Activer "Accueil" dans la sidebar
+    const homeItem = document.querySelector('.sidebar-item[onclick*="showMenu"]');
+    if (homeItem) {
+        homeItem.classList.add('active');
+    }
+}
+
+function showMenu() {
+    backToMenu(); // Utilise la même logique
 }
 
 // ============================================
@@ -160,12 +225,14 @@ function backToMenu() {
 // ============================================
 function updateMoneyDisplay(money) {
     currentMoney = money;
-    const display = document.getElementById('moneyDisplay');
-    display.textContent = money + ' $';
-    display.classList.add('pulse');
-    setTimeout(() => display.classList.remove('pulse'), 500);
+    
+    const sidebarMoney = document.getElementById('sidebarMoney');
+    if (sidebarMoney) {
+        sidebarMoney.textContent = formatMoney(money) + ' $';
+        sidebarMoney.classList.add('pulse');
+        setTimeout(() => sidebarMoney.classList.remove('pulse'), 500);
+    }
 }
-
 // ============================================
 // STATISTIQUES
 // ============================================
@@ -223,26 +290,6 @@ function updateStatsDisplay(stats) {
 // ============================================
 // MONEY CLICKER
 // ============================================
-async function doClick() {
-    try {
-        const response = await fetch('/api/clicker/click', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        
-        const data = await response.json();
-        updateMoneyDisplay(data.money);
-        
-        const btn = document.getElementById('clickButton');
-        btn.classList.add('clicked');
-        setTimeout(() => btn.classList.remove('clicked'), 100);
-        
-        showFloatingNumber(clickPower);
-        
-    } catch (error) {
-        console.error('Erreur clic:', error);
-    }
-}
 
 function showFloatingNumber(amount) {
     const container = document.getElementById('floatingNumbers');
@@ -306,7 +353,10 @@ function updateClickerDisplay() {
     document.getElementById('factoryCost').textContent = factoryCost;
     document.getElementById('bankCost').textContent = bankCost;
     
-    document.getElementById('incomeDisplay').textContent = '+' + passiveIncome + ' $/s';
+    const sidebarIncome = document.getElementById('sidebarIncome');
+    if (sidebarIncome) {
+        sidebarIncome.textContent = '+' + passiveIncome + ' $/s';
+    }
 }
 
 function startPassiveIncome() {
@@ -326,6 +376,7 @@ function startPassiveIncome() {
         }
     }, 1000);
 }
+
 // ============================================
 // BLACKJACK
 // ============================================
@@ -790,3 +841,531 @@ async function spinSlots() {
         btn.disabled = false;
     }
 }
+
+// ============================================
+// Plinko le sang de la veine
+// ============================================
+
+let plinkoCanvas = null;
+let plinkoCtx = null;
+let plinkoBall = null;
+let plinkoAnimating = false;
+let plinkoMultipliers = [];
+let plinkoPegs = [];
+
+const PLINKO_ROWS = 16;
+const PLINKO_PEG_RADIUS = 5;
+const PLINKO_BALL_RADIUS = 10;
+const PLINKO_SPACING = 48;
+const PLINKO_START_X = 425;
+const PLINKO_START_Y = 70;
+const GRAVITY = 0.5;
+const BOUNCE = 0.65;
+const FRICTION = 0.98;
+
+// Classe Balle avec physique réaliste
+class Ball {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 0.5; // Petite variation aléatoire initiale
+        this.vy = 0;
+        this.radius = PLINKO_BALL_RADIUS;
+        this.color = '#fbbf24';
+        this.glowIntensity = 0;
+        this.trail = [];
+        this.maxTrail = 12;
+    }
+
+    update() {
+        // Gravité
+        this.vy += GRAVITY;
+        
+        // Friction de l'air très légère
+        this.vx *= FRICTION;
+        this.vy *= FRICTION;
+        
+        // Limiter vitesse max pour éviter bugs
+        const maxSpeed = 18;
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        if (speed > maxSpeed) {
+            this.vx = (this.vx / speed) * maxSpeed;
+            this.vy = (this.vy / speed) * maxSpeed;
+        }
+        
+        // Update position
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        // Trail effect
+        if (Math.random() > 0.3) {
+            this.trail.push({x: this.x, y: this.y, alpha: 1});
+        }
+        
+        // Fade trail
+        this.trail = this.trail.filter(t => {
+            t.alpha -= 0.05;
+            return t.alpha > 0;
+        });
+        
+        if (this.trail.length > this.maxTrail) {
+            this.trail.shift();
+        }
+        
+        // Glow effect basé sur la vitesse
+        this.glowIntensity = Math.min(speed / 10, 1);
+        
+        // Collision avec pegs
+        this.checkPegCollisions();
+        
+        // Rebond sur les bords latéraux
+        if (this.x - this.radius < 20) {
+            this.x = 20 + this.radius;
+            this.vx *= -BOUNCE;
+        }
+        if (this.x + this.radius > plinkoCanvas.width - 20) {
+            this.x = plinkoCanvas.width - 20 - this.radius;
+            this.vx *= -BOUNCE;
+        }
+    }
+
+    checkPegCollisions() {
+        plinkoPegs.forEach(peg => {
+            const dx = this.x - peg.x;
+            const dy = this.y - peg.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const minDist = this.radius + peg.radius;
+            
+            if (distance < minDist) {
+                // Collision détectée !
+                const angle = Math.atan2(dy, dx);
+                const targetX = peg.x + Math.cos(angle) * minDist;
+                const targetY = peg.y + Math.sin(angle) * minDist;
+                
+                // Corriger position
+                this.x = targetX;
+                this.y = targetY;
+                
+                // Calculer nouvelle vitesse avec effet de rebond
+                const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+                this.vx = Math.cos(angle) * speed * BOUNCE;
+                this.vy = Math.sin(angle) * speed * BOUNCE;
+                
+                // Ajouter rotation aléatoire légère
+                const randomSpin = (Math.random() - 0.5) * 2;
+                this.vx += randomSpin;
+                
+                // Effet visuel sur le peg
+                peg.hit = true;
+                setTimeout(() => peg.hit = false, 150);
+            }
+        });
+    }
+
+    draw(ctx) {
+        // Dessiner trail
+        this.trail.forEach((point, i) => {
+            const size = (this.radius * 0.6) * (i / this.trail.length);
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(251, 191, 36, ${point.alpha * 0.4})`;
+            ctx.fill();
+        });
+        
+        // Glow effect
+        if (this.glowIntensity > 0) {
+            const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 2.5);
+            gradient.addColorStop(0, `rgba(251, 191, 36, ${this.glowIntensity * 0.6})`);
+            gradient.addColorStop(0.5, `rgba(251, 191, 36, ${this.glowIntensity * 0.3})`);
+            gradient.addColorStop(1, 'rgba(251, 191, 36, 0)');
+            
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius * 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+        }
+        
+        // Balle principale avec gradient
+        const ballGradient = ctx.createRadialGradient(
+            this.x - this.radius * 0.3, 
+            this.y - this.radius * 0.3, 
+            0,
+            this.x, 
+            this.y, 
+            this.radius
+        );
+        ballGradient.addColorStop(0, '#fef3c7');
+        ballGradient.addColorStop(0.5, '#fbbf24');
+        ballGradient.addColorStop(1, '#d97706');
+        
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = ballGradient;
+        ctx.fill();
+        
+        // Contour brillant
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Reflet
+        ctx.beginPath();
+        ctx.arc(this.x - this.radius * 0.35, this.y - this.radius * 0.35, this.radius * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.fill();
+    }
+
+    isAtBottom() {
+        return this.y > plinkoCanvas.height - 50 && Math.abs(this.vy) < 1;
+    }
+
+    getFinalSlot() {
+        const slotsStart = 20;
+        const slotsEnd = plinkoCanvas.width - 20;
+        const totalWidth = slotsEnd - slotsStart;
+        const slotWidth = totalWidth / 17;
+        const slot = Math.floor((this.x - slotsStart) / slotWidth);
+        return Math.max(0, Math.min(16, slot));
+    }
+}
+
+async function dropPlinko() {
+    if (plinkoAnimating) {
+        alert('Une balle est déjà en train de tomber !');
+        return;
+    }
+
+    const bet = parseInt(document.getElementById('plinkoBet').value);
+    const risk = document.getElementById('plinkoRisk').value;
+
+    if (!bet || bet < 10) {
+        alert('Mise minimum : 10$');
+        return;
+    }
+
+    const btn = document.getElementById('plinkoDropBtn');
+    btn.disabled = true;
+    plinkoAnimating = true;
+
+    try {
+        // Appel API
+        const response = await fetch('/api/plinko/drop', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({bet, risk})
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            alert(error.error);
+            btn.disabled = false;
+            plinkoAnimating = false;
+            return;
+        }
+
+        const data = await response.json();
+
+        // Initialiser si nécessaire
+        if (!plinkoCanvas) {
+            initPlinkoCanvas();
+        }
+
+        // Mettre à jour multiplicateurs
+        updatePlinkoMultipliers(risk);
+
+        // Créer et animer la balle
+        plinkoBall = new Ball(PLINKO_START_X, PLINKO_START_Y);
+        
+        await animatePlinko(data.position);
+
+        // Afficher résultat
+        const msgDiv = document.getElementById('plinkoMessage');
+        msgDiv.className = 'message';
+
+        if (data.result === 'win') {
+            msgDiv.classList.add('win');
+            msgDiv.innerHTML = `
+                ✅ GAGNÉ !<br>
+                Multiplicateur : x${data.multiplier}<br>
+                <strong style="font-size: 24px;">+${data.profit} $</strong>
+            `;
+        } else {
+            msgDiv.classList.add('lose');
+            msgDiv.innerHTML = `
+                ❌ PERDU<br>
+                Multiplicateur : x${data.multiplier}<br>
+                <strong style="font-size: 20px;">${data.profit} $</strong>
+            `;
+        }
+
+        updateMoneyDisplay(data.money);
+        updateStatsDisplay(data.stats);
+
+        setTimeout(() => {
+            msgDiv.innerHTML = '';
+            btn.disabled = false;
+            plinkoAnimating = false;
+        }, 4000);
+
+    } catch (error) {
+        console.error('Erreur Plinko:', error);
+        alert('Erreur de connexion');
+        btn.disabled = false;
+        plinkoAnimating = false;
+    }
+}
+
+function initPlinkoCanvas() {
+    plinkoCanvas = document.getElementById('plinkoCanvas');
+    if (!plinkoCanvas) return;
+
+    plinkoCtx = plinkoCanvas.getContext('2d');
+
+    // Créer les pegs
+    plinkoPegs = [];
+    for (let row = 0; row < PLINKO_ROWS; row++) {
+        const pegsInRow = row + 3;
+        const rowY = PLINKO_START_Y + row * PLINKO_SPACING;
+        const startX = PLINKO_START_X - ((pegsInRow - 1) * PLINKO_SPACING / 2);
+
+        for (let col = 0; col < pegsInRow; col++) {
+            plinkoPegs.push({
+                x: startX + col * PLINKO_SPACING,
+                y: rowY,
+                radius: PLINKO_PEG_RADIUS,
+                hit: false
+            });
+        }
+    }
+
+    // Dessiner le board initial
+    drawPlinkoBoard();
+}
+
+function drawPlinkoBoard() {
+    if (!plinkoCtx) return;
+
+    // Clear
+    plinkoCtx.clearRect(0, 0, plinkoCanvas.width, plinkoCanvas.height);
+
+    // Dessiner les pegs avec effet 3D
+    plinkoPegs.forEach(peg => {
+        // Ombre du peg
+        plinkoCtx.beginPath();
+        plinkoCtx.arc(peg.x + 1, peg.y + 2, peg.radius, 0, Math.PI * 2);
+        plinkoCtx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        plinkoCtx.fill();
+
+        // Peg principal avec gradient
+        const gradient = plinkoCtx.createRadialGradient(
+            peg.x - peg.radius * 0.3,
+            peg.y - peg.radius * 0.3,
+            0,
+            peg.x,
+            peg.y,
+            peg.radius * 1.5
+        );
+        
+        if (peg.hit) {
+            gradient.addColorStop(0, '#fbbf24');
+            gradient.addColorStop(1, '#f59e0b');
+        } else {
+            gradient.addColorStop(0, '#60a5fa');
+            gradient.addColorStop(1, '#2563eb');
+        }
+
+        plinkoCtx.beginPath();
+        plinkoCtx.arc(peg.x, peg.y, peg.radius, 0, Math.PI * 2);
+        plinkoCtx.fillStyle = gradient;
+        plinkoCtx.fill();
+
+        // Contour brillant
+        plinkoCtx.strokeStyle = peg.hit ? 'rgba(251, 191, 36, 0.8)' : 'rgba(96, 165, 250, 0.5)';
+        plinkoCtx.lineWidth = 2;
+        plinkoCtx.stroke();
+
+        // Reflet
+        plinkoCtx.beginPath();
+        plinkoCtx.arc(peg.x - peg.radius * 0.4, peg.y - peg.radius * 0.4, peg.radius * 0.4, 0, Math.PI * 2);
+        plinkoCtx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        plinkoCtx.fill();
+    });
+}
+
+async function animatePlinko(finalSlot) {
+    return new Promise((resolve) => {
+        let stuckFrames = 0;
+        let lastY = 0;
+        
+        const animate = () => {
+            drawPlinkoBoard();
+            
+            if (plinkoBall) {
+                plinkoBall.update();
+                plinkoBall.draw(plinkoCtx);
+
+                // Détection si la balle est coincée
+                if (Math.abs(plinkoBall.y - lastY) < 0.1) {
+                    stuckFrames++;
+                } else {
+                    stuckFrames = 0;
+                }
+                lastY = plinkoBall.y;
+
+                // Fin si au fond OU coincée trop longtemps
+                if (plinkoBall.isAtBottom() || stuckFrames > 60) {
+                    const slot = plinkoBall.getFinalSlot();
+                    highlightMultiplier(slot);
+                    plinkoBall = null;
+                    resolve();
+                    return;
+                }
+            }
+
+            requestAnimationFrame(animate);
+        };
+
+        animate();
+    });
+}
+
+function updatePlinkoMultipliers(risk) {
+    const multipliers = {
+        'low': [1.5, 1.3, 1.1, 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.3, 1.5],
+        'medium': [5.0, 3.0, 2.0, 1.5, 1.0, 0.5, 0.3, 0.2, 0.1, 0.2, 0.3, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0],
+        'high': [50, 20, 5, 2, 0.5, 0.2, 0.1, 0.0, 0.0, 0.0, 0.1, 0.2, 0.5, 2, 5, 20, 50]
+    };
+
+    plinkoMultipliers = multipliers[risk];
+
+    const container = document.getElementById('plinkoMultipliers');
+    container.innerHTML = plinkoMultipliers.map((mult, i) => {
+        let color = '#64748b';
+        let bgColor = 'rgba(100, 116, 139, 0.1)';
+        
+        if (mult >= 10) {
+            color = '#fbbf24';
+            bgColor = 'rgba(251, 191, 36, 0.2)';
+        } else if (mult >= 2) {
+            color = '#22c55e';
+            bgColor = 'rgba(34, 197, 94, 0.2)';
+        } else if (mult >= 1) {
+            color = '#3b82f6';
+            bgColor = 'rgba(59, 130, 246, 0.2)';
+        } else {
+            color = '#ef4444';
+            bgColor = 'rgba(239, 68, 68, 0.2)';
+        }
+
+        return `
+            <div id="mult-${i}" style="
+                flex: 1;
+                padding: 10px 4px;
+                background: ${bgColor};
+                border: 2px solid ${color};
+                border-radius: 8px;
+                font-weight: bold;
+                color: ${color};
+                font-size: 13px;
+                text-align: center;
+                transition: all 0.3s;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            ">
+                x${mult}
+            </div>
+        `;
+    }).join('');
+}
+
+function highlightMultiplier(position) {
+    const multEl = document.getElementById(`mult-${position}`);
+    if (multEl) {
+        multEl.style.transform = 'scale(1.3) translateY(-8px)';
+        multEl.style.boxShadow = '0 8px 24px currentColor';
+        multEl.style.zIndex = '10';
+        
+        setTimeout(() => {
+            multEl.style.transform = 'scale(1) translateY(0)';
+            multEl.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+            multEl.style.zIndex = '1';
+        }, 2500);
+    }
+}
+
+// Initialiser au chargement
+document.addEventListener('DOMContentLoaded', () => {
+    const plinkoTab = document.getElementById('plinko');
+    if (plinkoTab) {
+        const observer = new MutationObserver(() => {
+            if (plinkoTab.classList.contains('active') && !plinkoCanvas) {
+                setTimeout(() => {
+                    initPlinkoCanvas();
+                    updatePlinkoMultipliers('medium');
+                }, 100);
+            }
+        });
+        
+        observer.observe(plinkoTab, { attributes: true, attributeFilter: ['class'] });
+    }
+});
+
+
+
+let lastClickTime = 0;
+let clickCount = 0;
+let clickWarnings = 0;
+const CLICK_THRESHOLD = 100; // Max 25 clics par seconde
+const WARNING_THRESHOLD = 3; // 3 avertissements avant blocage
+
+async function doClick() {
+    const now = Date.now();
+    const timeDiff = now - lastClickTime;
+    
+    // Réinitialiser le compteur si > 1 seconde
+    if (timeDiff > 1000) {
+        clickCount = 0;
+    }
+    
+    clickCount++;
+    lastClickTime = now;
+    
+    // Vérifier si autoclick détecté
+    if (clickCount > CLICK_THRESHOLD) {
+        clickWarnings++;
+        
+        if (clickWarnings >= WARNING_THRESHOLD) {
+            alert('❌\nVous avez été temporairement bloqué pour 30 secondes.');
+            document.getElementById('clickButton').disabled = true;
+            setTimeout(() => {
+                document.getElementById('clickButton').disabled = false;
+                clickWarnings = 0;
+                clickCount = 0;
+            }, 30000);
+            return;
+        } else {
+            alert(`⚠️ Clics suspects détectés.\nAvertissement ${clickWarnings}/${WARNING_THRESHOLD}`);
+            clickCount = 0;
+        }
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/clicker/click', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        
+        const data = await response.json();
+        updateMoneyDisplay(data.money);
+        
+        const btn = document.getElementById('clickButton');
+        btn.classList.add('clicked');
+        setTimeout(() => btn.classList.remove('clicked'), 100);
+        
+        showFloatingNumber(clickPower);
+        
+    } catch (error) {
+        console.error('Erreur clic:', error);
+    }
+}
+
