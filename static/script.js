@@ -30,6 +30,15 @@ function showMenu() {
 }
 
 function formatMoney(amount) {
+    // PROTECTION : Si undefined ou null, retourner 0
+    if (amount === undefined || amount === null || isNaN(amount)) {
+        console.warn('formatMoney reçu une valeur invalide:', amount);
+        return '0';
+    }
+    
+    // Convertir en nombre
+    amount = Number(amount);
+    
     if (amount >= 1000000000) {
         return (amount / 1000000000).toFixed(1) + 'B';
     } else if (amount >= 1000000) {
@@ -237,7 +246,12 @@ function updateMoneyDisplay(money) {
 // STATISTIQUES
 // ============================================
 function updateStatsDisplay(stats) {
-    document.getElementById('totalGames').textContent = stats.totalGames;
+    // VÉRIFIER SI LES ÉLÉMENTS EXISTENT (seulement sur index.html)
+    const totalGames = document.getElementById('totalGames');
+    if (!totalGames) return; // Si pas sur la page principale, on skip
+    
+    // Maintenant on peut mettre à jour en toute sécurité
+    totalGames.textContent = stats.totalGames;
     document.getElementById('totalWins').textContent = stats.totalWins;
     document.getElementById('totalLosses').textContent = stats.totalLosses;
     document.getElementById('biggestWin').textContent = stats.biggestWin + ' $';
@@ -249,41 +263,53 @@ function updateStatsDisplay(stats) {
     document.getElementById('winRate').textContent = winRate + '%';
     
     // BlackJack
-    document.getElementById('bjGames').textContent = stats.blackjack.games;
-    document.getElementById('bjWins').textContent = stats.blackjack.wins;
-    const bjWinRate = stats.blackjack.games > 0 ? ((stats.blackjack.wins / stats.blackjack.games) * 100).toFixed(1) : 0;
-    document.getElementById('bjWinRate').textContent = bjWinRate + '%';
-    const bjProfit = stats.blackjack.won - stats.blackjack.wagered;
-    document.getElementById('bjProfit').textContent = bjProfit + ' $';
-    document.getElementById('bjProfit').style.color = bjProfit >= 0 ? '#22c55e' : '#ef4444';
+    const bjGames = document.getElementById('bjGames');
+    if (bjGames) {
+        bjGames.textContent = stats.blackjack.games;
+        document.getElementById('bjWins').textContent = stats.blackjack.wins;
+        const bjWinRate = stats.blackjack.games > 0 ? ((stats.blackjack.wins / stats.blackjack.games) * 100).toFixed(1) : 0;
+        document.getElementById('bjWinRate').textContent = bjWinRate + '%';
+        const bjProfit = stats.blackjack.won - stats.blackjack.wagered;
+        document.getElementById('bjProfit').textContent = bjProfit + ' $';
+        document.getElementById('bjProfit').style.color = bjProfit >= 0 ? '#22c55e' : '#ef4444';
+    }
     
     // Roulette
-    document.getElementById('rouletteGames').textContent = stats.roulette.games;
-    document.getElementById('rouletteWins').textContent = stats.roulette.wins;
-    const rouletteWinRate = stats.roulette.games > 0 ? ((stats.roulette.wins / stats.roulette.games) * 100).toFixed(1) : 0;
-    document.getElementById('rouletteWinRate').textContent = rouletteWinRate + '%';
-    const rouletteProfit = stats.roulette.won - stats.roulette.wagered;
-    document.getElementById('rouletteProfit').textContent = rouletteProfit + ' $';
-    document.getElementById('rouletteProfit').style.color = rouletteProfit >= 0 ? '#22c55e' : '#ef4444';
+    const rouletteGames = document.getElementById('rouletteGames');
+    if (rouletteGames) {
+        rouletteGames.textContent = stats.roulette.games;
+        document.getElementById('rouletteWins').textContent = stats.roulette.wins;
+        const rouletteWinRate = stats.roulette.games > 0 ? ((stats.roulette.wins / stats.roulette.games) * 100).toFixed(1) : 0;
+        document.getElementById('rouletteWinRate').textContent = rouletteWinRate + '%';
+        const rouletteProfit = stats.roulette.won - stats.roulette.wagered;
+        document.getElementById('rouletteProfit').textContent = rouletteProfit + ' $';
+        document.getElementById('rouletteProfit').style.color = rouletteProfit >= 0 ? '#22c55e' : '#ef4444';
+    }
     
     // MineBomb
-    document.getElementById('mbGames').textContent = stats.minebomb.games;
-    document.getElementById('mbWins').textContent = stats.minebomb.wins;
-    const mbWinRate = stats.minebomb.games > 0 ? ((stats.minebomb.wins / stats.minebomb.games) * 100).toFixed(1) : 0;
-    document.getElementById('mbWinRate').textContent = mbWinRate + '%';
-    const mbProfit = stats.minebomb.won - stats.minebomb.wagered;
-    document.getElementById('mbProfit').textContent = mbProfit + ' $';
-    document.getElementById('mbProfit').style.color = mbProfit >= 0 ? '#22c55e' : '#ef4444';
+    const mbGames = document.getElementById('mbGames');
+    if (mbGames) {
+        mbGames.textContent = stats.minebomb.games;
+        document.getElementById('mbWins').textContent = stats.minebomb.wins;
+        const mbWinRate = stats.minebomb.games > 0 ? ((stats.minebomb.wins / stats.minebomb.games) * 100).toFixed(1) : 0;
+        document.getElementById('mbWinRate').textContent = mbWinRate + '%';
+        const mbProfit = stats.minebomb.won - stats.minebomb.wagered;
+        document.getElementById('mbProfit').textContent = mbProfit + ' $';
+        document.getElementById('mbProfit').style.color = mbProfit >= 0 ? '#22c55e' : '#ef4444';
+    }
     
     // Slots
     if (stats.slots) {
-        document.getElementById('slotsGames').textContent = stats.slots.games;
-        document.getElementById('slotsWins').textContent = stats.slots.wins;
-        const slotsWinRate = stats.slots.games > 0 ? ((stats.slots.wins / stats.slots.games) * 100).toFixed(1) : 0;
-        document.getElementById('slotsWinRate').textContent = slotsWinRate + '%';
-        const slotsProfit = stats.slots.won - stats.slots.wagered;
-        document.getElementById('slotsProfit').textContent = slotsProfit + ' $';
-        document.getElementById('slotsProfit').style.color = slotsProfit >= 0 ? '#22c55e' : '#ef4444';
+        const slotsGames = document.getElementById('slotsGames');
+        if (slotsGames) {
+            slotsGames.textContent = stats.slots.games;
+            document.getElementById('slotsWins').textContent = stats.slots.wins;
+            const slotsWinRate = stats.slots.games > 0 ? ((stats.slots.wins / stats.slots.games) * 100).toFixed(1) : 0;
+            document.getElementById('slotsWinRate').textContent = slotsWinRate + '%';
+            const slotsProfit = stats.slots.won - stats.slots.wagered;
+            document.getElementById('slotsProfit').textContent = slotsProfit + ' $';
+            document.getElementById('slotsProfit').style.color = slotsProfit >= 0 ? '#22c55e' : '#ef4444';
+        }
     }
 }
 
@@ -736,8 +762,26 @@ async function cashout() {
         
         const data = await response.json();
         
-        updateMoneyDisplay(data.money);
-        updateStatsDisplay(data.stats);
+        // VÉRIFIER SI ERREUR
+        if (!response.ok || !data.success) {
+            const errorMsg = data.error || 'Erreur inconnue';
+            alert('❌ ' + errorMsg);
+            
+            // Si session expirée, reload la page
+            if (errorMsg.includes('session') || errorMsg.includes('partie')) {
+                setTimeout(() => location.reload(), 1500);
+            }
+            return;
+        }
+        
+        // SUCCÈS - Mettre à jour l'argent
+        if (data.money !== undefined) {
+            updateMoneyDisplay(data.money);
+        }
+        
+        if (data.stats) {
+            updateStatsDisplay(data.stats);
+        }
         
         const msgDiv = document.getElementById('mbMessage');
         msgDiv.className = 'message win';
@@ -755,6 +799,7 @@ async function cashout() {
         
     } catch (error) {
         console.error('Cashout error:', error);
+        alert('❌ Erreur de connexion. Vérifie ta connexion internet.');
     }
 }
 

@@ -1075,7 +1075,7 @@ def roulette_spin():
     })
 
 # ============================================
-# MINEBOMB
+# MINEBOMB - VERSION CORRIGÉE
 # ============================================
 
 @app.route('/api/minebomb/start', methods=['POST'])
@@ -1097,13 +1097,17 @@ def minebomb_start():
     grid = ['safe'] * (25 - bombs) + ['bomb'] * bombs
     random.shuffle(grid)
     
+    # IMPORTANT : Stocker avec une clé unique
     session['minebomb'] = {
         'bet': bet,
         'bombs': bombs,
         'grid': grid,
         'revealed': [],
-        'diamonds_found': 0
+        'diamonds_found': 0,
+        'active': True,  # Nouveau flag
+        'user_id': current_user.id  # Vérification de sécurité
     }
+    session.modified = True  # Force la sauvegarde
     
     return jsonify({'money': current_user.money})
 
@@ -1115,13 +1119,41 @@ def minebomb_reveal():
     index = int(data.get('index'))
     
     game = session.get('minebomb')
-    assert game, "Pas de partie en cours"
+    
+    # VÉRIFICATIONS RENFORCÉES
+    if not game:
+        return jsonify({
+            'success': False,
+            'error': 'Pas de partie en cours. La session a expiré.'
+        }), 400
+    
+    if not game.get('active'):
+        return jsonify({
+            'success': False,
+            'error': 'Cette partie est terminée.'
+        }), 400
+    
+    if game.get('user_id') != current_user.id:
+        return jsonify({
+            'success': False,
+            'error': 'Ce n\'est pas votre partie.'
+        }), 403
+    
+    if index in game['revealed']:
+        return jsonify({
+            'success': False,
+            'error': 'Case déjà révélée'
+        }), 400
     
     cell_type = game['grid'][index]
     game['revealed'].append(index)
     
     if cell_type == 'bomb':
-        # Perdu
+        # PERDU - Terminer proprement
+        game['active'] = False
+        session['minebomb'] = game
+        session.modified = True
+        
         history = GameHistory(
             user_id=current_user.id,
             game_type='minebomb',
@@ -1134,6 +1166,7 @@ def minebomb_reveal():
         db.session.add(history)
         db.session.commit()
         
+        # Nettoyer la session après un délai
         session.pop('minebomb', None)
         
         return jsonify({
@@ -1144,7 +1177,7 @@ def minebomb_reveal():
         })
     
     else:
-        # Diamant trouvé
+        # DIAMANT TROUVÉ
         game['diamonds_found'] += 1
         
         # Calculer le multiplicateur
@@ -1154,10 +1187,11 @@ def minebomb_reveal():
         potential_win = int(game['bet'] * multiplier)
         
         session['minebomb'] = game
+        session.modified = True
         
         return jsonify({
             'type': 'diamond',
-            'multiplier': multiplier,
+            'multiplier': round(multiplier, 2),
             'potential_win': potential_win,
             'diamonds_found': diamonds
         })
@@ -1165,17 +1199,68 @@ def minebomb_reveal():
 @app.route('/api/minebomb/cashout', methods=['POST'])
 @login_required
 def minebomb_cashout():
-    """Encaisser les gains"""
-    game = session.get('minebomb')
-    assert game, "Pas de partie en cours. La session a peut-être expiré. Veuillez recommencer."
+    """Encaisser les gains - VERSION DEBUG"""
     
-    diamonds = game['diamonds_found']
+    # LOG COMPLET
+    print("=" * 50)
+    print("CASHOUT APPELÉ")
+    print(f"User ID: {current_user.id}")
+    print(f"Session keys: {list(session.keys())}")
+    print(f"MineBomb data: {session.get('minebomb')}")
+    print("=" * 50)
+    
+    game = session.get('minebomb')
+    
+    # VÉRIFICATION 1 : Session existe ?
+    if not game:
+        error_msg = 'Pas de partie en cours. La session a expiré. 😢'
+        print(f"❌ ERREUR: {error_msg}")
+        return jsonify({
+            'success': False,
+            'error': error_msg
+        }), 400
+    
+    # VÉRIFICATION 2 : Partie active ?
+    if not game.get('active'):
+        error_msg = 'Cette partie est déjà terminée.'
+        print(f"❌ ERREUR: {error_msg}")
+        return jsonify({
+            'success': False,
+            'error': error_msg
+        }), 400
+    
+    # VÉRIFICATION 3 : Bon user ?
+    if game.get('user_id') != current_user.id:
+        error_msg = 'Ce n\'est pas votre partie.'
+        print(f"❌ ERREUR: {error_msg}")
+        return jsonify({
+            'success': False,
+            'error': error_msg
+        }), 403
+    
+    # VÉRIFICATION 4 : Au moins 1 diamant ?
+    diamonds = game.get('diamonds_found', 0)
+    if diamonds == 0:
+        error_msg = 'Vous devez trouver au moins 1 diamant avant de cashout 💎'
+        print(f"❌ ERREUR: {error_msg}")
+        return jsonify({
+            'success': False,
+            'error': error_msg
+        }), 400
+    
+    print(f"✅ Toutes les vérifications passées ! Diamonds: {diamonds}")
+    
+    # CALCUL DES GAINS
     multiplier = 1 + (diamonds * 0.3 * (game['bombs'] / 5))
     winnings = int(game['bet'] * multiplier)
     profit = winnings - game['bet']
     
+    print(f"Multiplier: {multiplier}, Winnings: {winnings}, Profit: {profit}")
+    
+    # AJOUTER L'ARGENT
     current_user.add_money(winnings)
     
+    # SAUVEGARDER HISTORIQUE
     history = GameHistory(
         user_id=current_user.id,
         game_type='minebomb',
@@ -1188,13 +1273,18 @@ def minebomb_cashout():
     db.session.add(history)
     db.session.commit()
     
+    print(f"✅ Historique sauvegardé. Nouvel argent: {current_user.money}")
+    
+    # NETTOYER LA SESSION
     session.pop('minebomb', None)
     
+    # ACHIEVEMENTS
     new_achievements = check_and_unlock_achievements(current_user)
 
     return jsonify({
+        'success': True,
         'profit': profit,
-        'multiplier': multiplier,
+        'multiplier': round(multiplier, 2),
         'money': current_user.money,
         'stats': get_global_stats(),
         'new_achievements': new_achievements
