@@ -5,20 +5,14 @@ from datetime import datetime, timedelta
 import random
 import os
 import json
+from flask_migrate import Migrate
 
 # Créer l'app Flask AVANT d'importer les modèles
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fortnite_en_2020_ct_quelque_chose')
-DATABASE_URL = os.environ.get('DATABASE_URL')
 
-if DATABASE_URL:
-    # Si on est en production avec PostgreSQL
-    if DATABASE_URL.startswith('postgres://'):
-        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
-    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-else:
-    #SEULEMENT EN LOCAL
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///casinoeuil.db'
+# FORCE SQLITE PARTOUT (local et Render)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///casinoeuil.db'
 
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
@@ -109,6 +103,7 @@ def login():
         
         login_user(user)
         user.last_login = datetime.utcnow()
+        user.last_ip = request.remote_addr
         db.session.commit()
         return jsonify({'success': True})
     
@@ -156,6 +151,9 @@ def admin_users():
             'money': user.money,
             'created_at': user.created_at.strftime('%Y-%m-%d %H:%M'),
             'last_login': user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Jamais',
+            'last_ip': user.last_ip,
+            'is_banned': user.is_banned,
+            'ban_reason': user.ban_reason,
         })
     
     return render_template('admin_users.html', users=users_data)
@@ -199,6 +197,56 @@ def admin_add_money(user_id):
         'message': f'{amount}$ ajoutés à {user.username}',
         'new_money': user.money
     })
+
+@app.route('/admin/user/ban/<int:user_id>', methods=['POST'])
+@login_required
+def admin_ban_user(user_id):
+    assert current_user.username == 'archibogue88', "Accès refusé"
+    
+    data = request.json
+    reason = data.get('reason', 'Aucune raison')
+    
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    assert user.username != 'archibogue88', "Tu ne peux pas te bannir"
+    
+    user.is_banned = True
+    user.ban_reason = reason
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': f'{user.username} banni'})
+
+@app.route('/admin/user/unban/<int:user_id>', methods=['POST'])
+@login_required
+def admin_unban_user(user_id):
+    assert current_user.username == 'archibogue88', "Accès refusé"
+    
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    
+    user.is_banned = False
+    user.ban_reason = ''
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': f'{user.username} débanni'})
+
+@app.route('/admin/user/set_money/<int:user_id>', methods=['POST'])
+@login_required
+def admin_set_money(user_id):
+    assert current_user.username == 'archibogue88', "Accès refusé"
+    
+    data = request.json
+    amount = int(data.get('amount', 0))
+    
+    assert amount >= 0, "Montant invalide"
+    
+    user = User.query.get(user_id)
+    assert user, "Utilisateur non trouvé"
+    
+    user.money = amount
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': f'Argent de {user.username} défini à {amount}$', 'new_money': user.money})
 
 # ============================================
 # STATISTIQUES ET LEADERBOARD

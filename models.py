@@ -54,6 +54,9 @@ class User(UserMixin, db.Model):
     money = db.Column(db.Integer, default=5000, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime, default=datetime.utcnow)
+    last_ip = db.Column(db.String(45), default='')
+    is_banned = db.Column(db.Boolean, default=False)
+    ban_reason = db.Column(db.String(255), default='')
     
     # Profil public
     bio = db.Column(db.String(500), default='')
