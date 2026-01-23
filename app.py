@@ -10,8 +10,16 @@ import json
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fortnite_en_2020_ct_quelque_chose')
 
-# FORCE SQLITE PARTOUT (local et Render)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///casinoeuil.db'
+# Configuration de la base de données
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    # Production (Render avec Neon PostgreSQL)
+    if DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql+psycopg2://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+else:
+    # Local (SQLite)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///casinoeuil.db'
 
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,
