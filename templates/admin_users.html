@@ -228,54 +228,58 @@
 <body>
     <div class="notification" id="notification"></div>
 
-    <!-- SIDEBAR -->
     <div class="sidebar">
-        <div class="sidebar-logo">
-            <img src="https://github.com/user-attachments/assets/d29729d4-da3d-4b22-a951-cbc7fc0d02ca" alt="Logo" style="width: 50px; height: auto;">
-        </div>
-        
-        <div class="sidebar-header">
-            <div class="sidebar-money">
-                <div class="sidebar-money-value">{{ current_user.money }} $</div>
-            </div>
-            <div class="sidebar-income" id="sidebarIncome">+0 $/s</div>
-        </div>
-        
-        <div class="sidebar-menu">
-            <a href="/" class="sidebar-item">
-                <span class="sidebar-icon">🏠</span>
-                <span class="sidebar-text">Accueil</span>
-            </a>
-            
-            <a href="/social" class="sidebar-item">
-                <span class="sidebar-icon">👥</span>
-                <span class="sidebar-text">Amis</span>
-            </a>
-            
-            <a href="/clans" class="sidebar-item">
-                <span class="sidebar-icon">🏰</span>
-                <span class="sidebar-text">Clans</span>
-            </a>
-            
-            <a href="/profile" class="sidebar-item">
-                <span class="sidebar-icon">👤</span>
-                <span class="sidebar-text">Profil</span>
-            </a>
-            
-            <a href="/admin/users" class="sidebar-item active">
-                <span class="sidebar-icon">🔧</span>
-                <span class="sidebar-text">Admin</span>
-            </a>
-        </div>
-        
-        <div class="sidebar-footer">
-            <a href="/logout" class="sidebar-item logout">
-                <span class="sidebar-icon">🚪</span>
-                <span class="sidebar-text">Déconnexion</span>
-            </a>
-        </div>
+    <div class="sidebar-logo">
+        <img src="https://github.com/user-attachments/assets/d29729d4-da3d-4b22-a951-cbc7fc0d02ca" alt="Logo" style="width: 50px;">
     </div>
-
+    
+    <div class="sidebar-header">
+        <div class="sidebar-money">
+            <div class="sidebar-money-value">{{ current_user.money }} $</div>
+        </div>
+        <div class="sidebar-income" id="sidebarIncome">+0 $/s</div>
+    </div>
+    
+    <div class="sidebar-menu">
+        <a href="/" class="sidebar-item">
+            <span class="sidebar-icon">🏠</span>
+            <span class="sidebar-text">Accueil</span>
+        </a>
+        
+        <div class="sidebar-divider" style="height: 1px; background: rgba(148, 163, 184, 0.1); margin: 8px 0;"></div>
+        
+        <a href="/admin/users" class="sidebar-item active">
+            <span class="sidebar-icon">👥</span>
+            <span class="sidebar-text">Utilisateurs</span>
+        </a>
+        <a href="/admin/email" class="sidebar-item">
+            <span class="sidebar-icon">📧</span>
+            <span class="sidebar-text">Emails</span>
+        </a>
+        
+        <div class="sidebar-divider" style="height: 1px; background: rgba(148, 163, 184, 0.1); margin: 8px 0;"></div>
+        
+        <a href="/social" class="sidebar-item">
+            <span class="sidebar-icon">👥</span>
+            <span class="sidebar-text">Amis</span>
+        </a>
+        <a href="/clans" class="sidebar-item">
+            <span class="sidebar-icon">🏰</span>
+            <span class="sidebar-text">Clans</span>
+        </a>
+        <a href="/profile" class="sidebar-item">
+            <span class="sidebar-icon">👤</span>
+            <span class="sidebar-text">Profil</span>
+        </a>
+    </div>
+    
+    <div class="sidebar-footer">
+        <a href="/logout" class="sidebar-item logout">
+            <span class="sidebar-icon">🚪</span>
+            <span class="sidebar-text">Déconnexion</span>
+        </a>
+    </div>
+</div>
     <div class="admin-container">
         <div class="admin-header">
             <h1>🔧 Panel Admin</h1>

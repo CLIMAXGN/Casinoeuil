@@ -5,10 +5,42 @@ from datetime import datetime, timedelta
 import random
 import os
 import json
+from threading import Thread
+from flask_mail import Mail, Message
 
-# Créer l'app Flask AVANT d'importer les modèles
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fortnite_en_2020_ct_quelque_chose')
+
+# Configuration Flask-Mail
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'infos.casinoeuil@gmail.com')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'vmii xsrc tilt cqct')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME', 'infos.casinoeuil@gmail.com')
+
+mail = Mail(app)
+
+def send_async_email(app, msg):
+    """Envoie un email de manière asynchrone"""
+    with app.app_context():
+        try:
+            mail.send(msg)
+        except Exception as e:
+            print(f"Erreur envoi email: {e}")
+
+def send_email(subject, recipients, text_body, html_body=None):
+    """Envoie un email (wrapper)"""
+    msg = Message(subject, recipients=recipients)
+    msg.body = text_body
+    if html_body:
+        msg.html = html_body
+    
+    # Envoi asynchrone pour ne pas bloquer
+    Thread(target=send_async_email, args=(app, msg)).start()
+# Créer l'app Flask AVANT d'importer les modèles
+
+
 
 # Configuration de la base de données
 DATABASE_URL = os.environ.get('DATABASE_URL')
@@ -254,6 +286,202 @@ def admin_set_money(user_id):
     db.session.commit()
     
     return jsonify({'success': True, 'message': f'Argent de {user.username} défini à {amount}$', 'new_money': user.money})
+
+@app.route('/admin/email')
+@login_required
+def admin_email_page():
+    """Page d'envoi d'emails"""
+    assert current_user.username == 'archibogue88', "Accès refusé"
+    
+    total_users = User.query.count()
+    return render_template('admin_email.html', total_users=total_users)
+
+@app.route('/admin/email/send', methods=['POST'])
+@login_required
+def admin_send_email():
+    """Envoie un email à tous les utilisateurs"""
+    assert current_user.username == 'archibogue88', "Accès refusé"
+    
+    data = request.json
+    subject = data.get('subject', '').strip()
+    message = data.get('message', '').strip()
+    send_to = data.get('send_to', 'all')  # 'all', 'active', 'rich'
+    
+    assert subject, "Sujet requis"
+    assert message, "Message requis"
+    assert len(subject) <= 200, "Sujet trop long"
+    assert len(message) <= 5000, "Message trop long"
+    
+    # Filtrer les destinataires
+    if send_to == 'all':
+        users = User.query.all()
+    elif send_to == 'active':
+        # Actifs = connectés dans les 7 derniers jours
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        users = User.query.filter(User.last_login >= week_ago).all()
+    elif send_to == 'rich':
+        # Riches = plus de 100K
+        users = User.query.filter(User.money >= 100000).all()
+    else:
+        users = User.query.all()
+    
+    # Préparer le corps de l'email
+    text_body = f"""
+Bonjour {{username}},
+
+{message}
+
+---
+L'équipe Casinoeuil
+https://casinoeuil-r0xp.onrender.com
+    """
+    
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f3f4f6;
+            margin: 0;
+            padding: 20px;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }}
+        .header {{
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            padding: 32px 24px;
+            text-align: center;
+            color: white;
+        }}
+        .header h1 {{
+            margin: 0;
+            font-size: 28px;
+        }}
+        .content {{
+            padding: 32px 24px;
+            color: #1f2937;
+            line-height: 1.6;
+        }}
+        .message {{
+            background: #f9fafb;
+            border-left: 4px solid #3b82f6;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }}
+        .footer {{
+            background: #f3f4f6;
+            padding: 24px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }}
+        .button {{
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 16px 0;
+            font-weight: 600;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎰 Casinoeuil</h1>
+        </div>
+        <div class="content">
+            <p>Bonjour <strong>{{username}}</strong>,</p>
+            <div class="message">
+                {message.replace(chr(10), '<br>')}
+            </div>
+            <p style="text-align: center;">
+                <a href="https://casinoeuil-r0xp.onrender.com" class="button">
+                    🎮 Jouer maintenant
+                </a>
+            </p>
+        </div>
+        <div class="footer">
+            <p>L'équipe Casinoeuil</p>
+            <p>Cet email a été envoyé à tous les joueurs.</p>
+        </div>
+    </div>
+</body>
+</html>
+    """
+    
+    # Envoyer les emails (max 50 par batch pour éviter les limites Gmail)
+    sent_count = 0
+    failed_count = 0
+    
+    for i in range(0, len(users), 50):
+        batch = users[i:i+50]
+        
+        for user in batch:
+            try:
+                personalized_text = text_body.replace('{username}', user.username)
+                personalized_html = html_body.replace('{username}', user.username)
+                
+                send_email(
+                    subject=f"🎰 {subject}",
+                    recipients=[user.email],
+                    text_body=personalized_text,
+                    html_body=personalized_html
+                )
+                sent_count += 1
+            except Exception as e:
+                print(f"Erreur envoi à {user.email}: {e}")
+                failed_count += 1
+        
+        # Petit délai entre les batches
+        import time
+        time.sleep(1)
+    
+    return jsonify({
+        'success': True,
+        'message': f'{sent_count} emails envoyés, {failed_count} échecs',
+        'sent': sent_count,
+        'failed': failed_count
+    })
+
+@app.route('/admin/email/test', methods=['POST'])
+@login_required
+def admin_test_email():
+    """Envoie un email de test à l'admin"""
+    assert current_user.username == 'archibogue88', "Accès refusé"
+    
+    try:
+        send_email(
+            subject="🎰 Test Email - Casinoeuil",
+            recipients=[current_user.email],
+            text_body="Ceci est un email de test.\n\nSi vous recevez ceci, la configuration est correcte!",
+            html_body="""
+            <h1>🎰 Email de test</h1>
+            <p>Ceci est un email de test.</p>
+            <p><strong>Si vous recevez ceci, la configuration est correcte!</strong></p>
+            """
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': f'Email de test envoyé à {current_user.email}'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erreur: {str(e)}'
+        }), 500
 
 # ============================================
 # STATISTIQUES ET LEADERBOARD

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Envoi d'emails</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .email-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            padding-left: calc(220px + 40px);
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .email-form {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .form-section label {
+            display: block;
+            color: #cbd5e1;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-section input,
+        .form-section select,
+        .form-section textarea {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .form-section textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        .recipients-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #93c5fd;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn-send {
+            flex: 1;
+            background: #22c55e;
+            color: white;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-send:hover {
+            background: #16a34a;
+        }
+
+        .btn-test {
+            background: #3b82f6;
+            color: white;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-test:hover {
+            background: #2563eb;
+        }
+
+        .preview-box {
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 32px;
+        }
+
+        .preview-box h3 {
+            color: #f59e0b;
+            margin-bottom: 16px;
+        }
+
+        .email-preview {
+            background: white;
+            color: #1f2937;
+            padding: 24px;
+            border-radius: 8px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .preview-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            padding: 24px;
+            text-align: center;
+            color: white;
+            margin: -24px -24px 24px -24px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 2000;
+            display: none;
+            animation: slideIn 0.3s;
+        }
+
+        .notification.success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .notification.error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #3b82f6;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification" id="notification"></div>
+
+    <!-- SIDEBAR COHÉRENTE -->
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <img src="https://github.com/user-attachments/assets/d29729d4-da3d-4b22-a951-cbc7fc0d02ca" alt="Logo" style="width: 50px;">
+        </div>
+        
+        <div class="sidebar-header">
+            <div class="sidebar-money">
+                <div class="sidebar-money-value">{{ current_user.money }} $</div>
+            </div>
+            <div class="sidebar-income" id="sidebarIncome">+0 $/s</div>
+        </div>
+        
+        <div class="sidebar-menu">
+            <a href="/" class="sidebar-item">
+                <span class="sidebar-icon">🏠</span>
+                <span class="sidebar-text">Accueil</span>
+            </a>
+            
+            <div class="sidebar-divider" style="height: 1px; background: rgba(148, 163, 184, 0.1); margin: 8px 0;"></div>
+            
+            <a href="/admin/users" class="sidebar-item">
+                <span class="sidebar-icon">👥</span>
+                <span class="sidebar-text">Utilisateurs</span>
+            </a>
+            <a href="/admin/email" class="sidebar-item active">
+                <span class="sidebar-icon">📧</span>
+                <span class="sidebar-text">Emails</span>
+            </a>
+            
+            <div class="sidebar-divider" style="height: 1px; background: rgba(148, 163, 184, 0.1); margin: 8px 0;"></div>
+            
+            <a href="/social" class="sidebar-item">
+                <span class="sidebar-icon">👥</span>
+                <span class="sidebar-text">Amis</span>
+            </a>
+            <a href="/clans" class="sidebar-item">
+                <span class="sidebar-icon">🏰</span>
+                <span class="sidebar-text">Clans</span>
+            </a>
+            <a href="/profile" class="sidebar-item">
+                <span class="sidebar-icon">👤</span>
+                <span class="sidebar-text">Profil</span>
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <a href="/logout" class="sidebar-item logout">
+                <span class="sidebar-icon">🚪</span>
+                <span class="sidebar-text">Déconnexion</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="email-container">
+        <div class="email-header">
+            <h1>📧 Envoi d'emails groupés</h1>
+            <p>Envoie un message à tous les joueurs de Casinoeuil</p>
+        </div>
+
+        <div class="email-form">
+            <div class="form-section">
+                <label>Destinataires</label>
+                <select id="sendTo" onchange="updateRecipients()">
+                    <option value="all">Tous les utilisateurs ({{ total_users }})</option>
+                    <option value="active">Utilisateurs actifs (7 derniers jours)</option>
+                    <option value="rich">Utilisateurs riches (100K+)</option>
+                </select>
+                <div class="recipients-info" id="recipientsInfo">
+                    📊 {{ total_users }} destinataires
+                </div>
+            </div>
+
+            <div class="form-section">
+                <label>Sujet de l'email *</label>
+                <input 
+                    type="text" 
+                    id="subject" 
+                    placeholder="Ex: Nouveau jeu disponible !"
+                    maxlength="200"
+                    oninput="updatePreview()"
+                >
+            </div>
+
+            <div class="form-section">
+                <label>Message *</label>
+                <textarea 
+                    id="message" 
+                    placeholder="Écris ton message ici...
+                    
+Utilise des sauts de ligne pour structurer ton message.
+
+{username} sera remplacé par le nom de chaque joueur."
+                    maxlength="5000"
+                    oninput="updatePreview()"
+                ></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-test" onclick="sendTestEmail()">
+                    🧪 Envoyer un test à moi-même
+                </button>
+                <button class="btn-send" onclick="sendBulkEmail()">
+                    📧 Envoyer à tous les destinataires
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Envoi des emails en cours...</p>
+            </div>
+        </div>
+
+        <div class="preview-box">
+            <h3>📋 Aperçu de l'email</h3>
+            <div class="email-preview">
+                <div class="preview-header">
+                    <h1>🎰 <span id="previewSubject">Sujet de l'email</span></h1>
+                </div>
+                <p>Bonjour <strong>JoueurExemple</strong>,</p>
+                <div style="background: #f9fafb; border-left: 4px solid #3b82f6; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                    <div id="previewMessage">Ton message apparaîtra ici...</div>
+                </div>
+                <p style="text-align: center;">
+                    <a href="#" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 32px; border-radius: 8px; text-decoration: none;">
+                        🎮 Jouer maintenant
+                    </a>
+                </p>
+                <div style="background: #f3f4f6; padding: 16px; margin: 24px -24px -24px -24px; text-align: center; color: #6b7280; font-size: 14px; border-radius: 0 0 8px 8px;">
+                    <p>L'équipe Casinoeuil</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatMoney(amount) {
+            if (amount >= 1000000000) {
+                return (amount / 1000000000).toFixed(1) + 'B';
+            } else if (amount >= 1000000) {
+                return (amount / 1000000).toFixed(1) + 'M';
+            } else if (amount >= 1000) {
+                return (amount / 1000).toFixed(1) + 'K';
+            }
+            return amount.toString();
+        }
+
+        function showNotification(message, type = 'success') {
+            const notif = document.getElementById('notification');
+            notif.textContent = message;
+            notif.className = `notification ${type} show`;
+            setTimeout(() => notif.classList.remove('show'), 5000);
+        }
+
+        function updatePreview() {
+            const subject = document.getElementById('subject').value || 'Sujet de l\'email';
+            const message = document.getElementById('message').value || 'Ton message apparaîtra ici...';
+            
+            document.getElementById('previewSubject').textContent = subject;
+            document.getElementById('previewMessage').innerHTML = message
+                .replace(/\n/g, '<br>')
+                .replace('{username}', '<strong>JoueurExemple</strong>');
+        }
+
+        function updateRecipients() {
+            const sendTo = document.getElementById('sendTo').value;
+            const info = document.getElementById('recipientsInfo');
+            
+            if (sendTo === 'all') {
+                info.textContent = '📊 {{ total_users }} destinataires (tous)';
+            } else if (sendTo === 'active') {
+                info.textContent = '📊 Utilisateurs actifs (connectés dans les 7 derniers jours)';
+            } else if (sendTo === 'rich') {
+                info.textContent = '📊 Utilisateurs avec 100,000$ ou plus';
+            }
+        }
+
+        async function sendTestEmail() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '⏳ Envoi...';
+            
+            try {
+                const response = await fetch('/admin/email/test', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erreur de connexion', 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '🧪 Envoyer un test à moi-même';
+        }
+
+        async function sendBulkEmail() {
+            const subject = document.getElementById('subject').value.trim();
+            const message = document.getElementById('message').value.trim();
+            const sendTo = document.getElementById('sendTo').value;
+            
+            if (!subject || !message) {
+                showNotification('Sujet et message requis', 'error');
+                return;
+            }
+            
+            if (!confirm('⚠️ ATTENTION !\n\nTu es sur le point d\'envoyer cet email à tous les destinataires.\n\nÊtes-tu sûr ?')) {
+                return;
+            }
+            
+            const loading = document.getElementById('loading');
+            const btn = event.target;
+            
+            btn.disabled = true;
+            loading.classList.add('show');
+            
+            try {
+                const response = await fetch('/admin/email/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ subject, message, send_to: sendTo })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(`✅ ${data.sent} emails envoyés ! (${data.failed} échecs)`, 'success');
+                    document.getElementById('subject').value = '';
+                    document.getElementById('message').value = '';
+                    updatePreview();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erreur de connexion', 'error');
+            }
+            
+            btn.disabled = false;
+            loading.classList.remove('show');
+        }
+
+        async function loadPassiveIncome() {
+            try {
+                const response = await fetch('/api/clicker/get_data');
+                const data = await response.json();
+                document.getElementById('sidebarIncome').textContent = '+' + data.passiveIncome + ' $/s';
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updatePreview();
+            loadPassiveIncome();
+            
+            const moneyEl = document.querySelector('.sidebar-money-value');
+            if (moneyEl) {
+                const amount = parseInt(moneyEl.textContent.replace(/[^0-9]/g, ''));
+                moneyEl.textContent = formatMoney(amount) + ' $';
+            }
+        });
+    </script>
+</body>
+</html>

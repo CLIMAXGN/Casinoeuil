@@ -1311,40 +1311,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-let lastClickTime = 0;
-let clickCount = 0;
+let clickTimes = [];
 let clickWarnings = 0;
-const CLICK_THRESHOLD = 100; // Max 25 clics par seconde
+const CLICK_THRESHOLD = 30; // Max 30 clics par seconde (humainement impossible de maintenir)
 const WARNING_THRESHOLD = 3; // 3 avertissements avant blocage
+const TIME_WINDOW = 1000; // Fenêtre de 1 seconde
 
 async function doClick() {
     const now = Date.now();
-    const timeDiff = now - lastClickTime;
     
-    // Réinitialiser le compteur si > 1 seconde
-    if (timeDiff > 1000) {
-        clickCount = 0;
-    }
+    // Nettoyer les clics de plus d'1 seconde
+    clickTimes = clickTimes.filter(time => now - time < TIME_WINDOW);
     
-    clickCount++;
-    lastClickTime = now;
+    // Ajouter le clic actuel
+    clickTimes.push(now);
     
-    // Vérifier si autoclick détecté
-    if (clickCount > CLICK_THRESHOLD) {
+    // Vérifier si autoclick détecté (plus de X clics en 1 seconde)
+    if (clickTimes.length > CLICK_THRESHOLD) {
         clickWarnings++;
         
         if (clickWarnings >= WARNING_THRESHOLD) {
-            alert('❌\nVous avez été temporairement bloqué pour 30 secondes.');
+            alert('❌ ANTI-AUTOCLICKER\nVous avez été temporairement bloqué pour 30 secondes.\nRaison: Plus de 30 clics par seconde détectés.');
             document.getElementById('clickButton').disabled = true;
+            clickTimes = [];
             setTimeout(() => {
                 document.getElementById('clickButton').disabled = false;
                 clickWarnings = 0;
-                clickCount = 0;
             }, 30000);
             return;
         } else {
-            alert(`⚠️ Clics suspects détectés.\nAvertissement ${clickWarnings}/${WARNING_THRESHOLD}`);
-            clickCount = 0;
+            alert(`⚠️ ANTI-AUTOCLICKER\nAvertissement ${clickWarnings}/${WARNING_THRESHOLD}\n${clickTimes.length} clics en 1 seconde détectés (max: ${CLICK_THRESHOLD})`);
+            clickTimes = [];
         }
         return;
     }
