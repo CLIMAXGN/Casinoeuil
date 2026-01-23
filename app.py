@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import random
 import os
 import json
-from flask_migrate import Migrate
 
 # Créer l'app Flask AVANT d'importer les modèles
 app = Flask(__name__)
