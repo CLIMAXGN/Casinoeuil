@@ -43,10 +43,10 @@
             <span class="sidebar-text">Roulette</span>
         </a>
         
-        <a href="#" onclick="startGame('minebomb'); return false;" class="sidebar-item">
-            <span class="sidebar-icon">💣</span>
-            <span class="sidebar-text">MineBomb</span>
-        </a>
+        <div class="sidebar-item" style="opacity: 0.4; cursor: not-allowed;" title="En maintenance">
+            <span class="sidebar-icon">🔧</span>
+            <span class="sidebar-text">MineBomb <span style="font-size: 9px; background: #ef4444; padding: 2px 4px; border-radius: 3px; margin-left: 4px;">MAINTENANCE</span></span>
+        </div>
         
         <a href="#" onclick="startGame('slots'); return false;" class="sidebar-item">
             <span class="sidebar-icon">🎲</span>
@@ -133,12 +133,22 @@
                 <div class="game-title">Roulette</div>
                 <div class="game-desc">Pariez sur votre couleur ou numéro favori.</div>
             </div>
-            <div class="game-card" onclick="startGame('minebomb')">
-                <div class="game-logo">
-                    <img src="https://github.com/user-attachments/assets/e5c6692e-15e3-4d4e-8a13-759c310b46f6" alt="MineBomb"/>
+            <div class="game-card" style="opacity: 0.5; cursor: not-allowed; position: relative;" title="En maintenance">
+                <div style="position: absolute; top: 10px; right: 10px; background: #ef4444; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; z-index: 10;">
+                    MAINTENANCE
                 </div>
-                <div class="game-title">Minebomb</div>
-                <div class="game-desc">Évitez les bombes et multipliez vos gains.</div>
+                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); border-radius: 12px; z-index: 5;">
+                    <div style="text-align: center; color: white;">
+                        <div style="font-size: 48px; margin-bottom: 8px;">🔧</div>
+                        <div style="font-size: 16px; font-weight: bold;">En maintenance</div>
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Correction de bugs en cours</div>
+                    </div>
+                </div>
+                <div class="game-logo">
+                    <img src="https://github.com/user-attachments/assets/e5c6692e-15e3-4d4e-8a13-759c310b46f6" alt="MineBomb" style="filter: grayscale(1);"/>
+                </div>
+                <div class="game-title" style="color: #64748b;">Minebomb</div>
+                <div class="game-desc" style="color: #475569;">Évitez les bombes et multipliez vos gains.</div>
             </div>
             <div class="game-card" onclick="startGame('slots')">
                 <div class="game-logo">
