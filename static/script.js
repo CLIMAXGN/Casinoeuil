@@ -831,8 +831,12 @@ async function startMineBomb() {
 }
 
 async function revealCell(index) {
-    const cell = document.querySelectorAll('.mine-cell')[index];
-    if (cell.classList.contains('revealed')) return;
+    if (!mbGameActive) return;
+    if (mbRevealed.includes(index)) return;
+    
+    // 🔥 DÉSACTIVER IMMÉDIATEMENT LE JEU LOCALEMENT
+    const originalActive = mbGameActive;
+    mbGameActive = false;
     
     try {
         const response = await fetch('/api/minebomb/reveal', {
@@ -842,49 +846,61 @@ async function revealCell(index) {
         });
         
         const data = await response.json();
-        cell.classList.add('revealed');
+        
+        if (!response.ok) {
+            // Erreur - réactiver si c'était une erreur de validation
+            mbGameActive = originalActive;
+            showMessage(data.error || 'Erreur', 'error');
+            return;
+        }
+        
+        const cell = document.querySelectorAll('.mine-cell')[index];
+        mbRevealed.push(index);
         
         if (data.type === 'bomb') {
-            cell.classList.add('bomb');
+            // 💣 BOMBE - Le jeu reste désactivé
             cell.innerHTML = '💣';
-            
-            if (data.grid) {
-                document.querySelectorAll('.mine-cell').forEach((c, i) => {
-                    c.onclick = null;
-                    if (data.grid[i] === 'bomb' && !c.classList.contains('revealed')) {
-                        setTimeout(() => {
-                            c.classList.add('revealed', 'bomb');
-                            c.innerHTML = '💣';
-                        }, Math.random() * 1000);
-                    }
-                });
-            }
-            
-            const msgDiv = document.getElementById('mbMessage');
-            msgDiv.className = 'message lose';
-            msgDiv.innerHTML = '💥 BOUM! Vous avez perdu';
-            
-            updateMoneyDisplay(data.money);
-            updateStatsDisplay(data.stats);
-            
-            document.getElementById('cashoutBtn').disabled = true;
+            cell.classList.add('revealed', 'bomb');
             
             setTimeout(() => {
-                document.getElementById('mbGame').style.display = 'none';
-                document.getElementById('mbBetting').style.display = 'block';
-            }, 3000);
-            
+                mbGameActive = false; // S'assurer que c'est désactivé
+                document.getElementById('cashoutBtn').disabled = true; // Désactiver le bouton
+                
+                // Afficher toute la grille
+                data.grid.forEach((type, i) => {
+                    const c = document.querySelectorAll('.mine-cell')[i];
+                    if (!mbRevealed.includes(i)) {
+                        c.innerHTML = type === 'bomb' ? '💣' : '💎';
+                        c.classList.add('revealed', type);
+                    }
+                });
+                
+                updateStats(data.stats);
+                showMessage('💥 BOOM ! Vous avez perdu !', 'error');
+                
+                setTimeout(() => {
+                    backToMenu();
+                }, 2000);
+            }, 500);
         } else {
-            cell.classList.add('safe');
+            // 💎 DIAMANT - Réactiver le jeu
+            mbGameActive = true;
             cell.innerHTML = '💎';
-            document.getElementById('multiplier').textContent = data.multiplier.toFixed(2);
-            document.getElementById('potentialWin').textContent = data.potential_win;
+            cell.classList.add('revealed', 'diamond');
+            
             document.getElementById('diamondCount').textContent = data.diamonds_found;
+            document.getElementById('multiplier').textContent = data.multiplier;
+            document.getElementById('potentialWin').textContent = data.potential_win;
+            
             document.getElementById('cashoutBtn').disabled = false;
+            
+            showMessage(`💎 +1 Diamant ! Multiplicateur: x${data.multiplier}`, 'success');
         }
         
     } catch (error) {
-        console.error('Reveal error:', error);
+        // En cas d'erreur réseau, réactiver
+        mbGameActive = originalActive;
+        showMessage('Erreur de connexion', 'error');
     }
 }
 

@@ -1370,11 +1370,12 @@ def minebomb_reveal():
     game['revealed'].append(index)
     
     if cell_type == 'bomb':
-        # PERDU - Terminer proprement
+        # ⚠️ FIX: DÉSACTIVER LA PARTIE IMMÉDIATEMENT
         game['active'] = False
         session['minebomb'] = game
         session.modified = True
         
+        # Sauvegarder l'historique
         history = GameHistory(
             user_id=current_user.id,
             game_type='minebomb',
@@ -1390,11 +1391,13 @@ def minebomb_reveal():
         # Nettoyer la session après un délai
         session.pop('minebomb', None)
         
+        # ✅ RETOURNER active: False pour désactiver le bouton côté client
         return jsonify({
             'type': 'bomb',
             'money': current_user.money,
             'grid': game['grid'],
-            'stats': get_global_stats()
+            'stats': get_global_stats(),
+            'active': False  # 🔥 AJOUT CRUCIAL
         })
     
     else:
@@ -1414,7 +1417,8 @@ def minebomb_reveal():
             'type': 'diamond',
             'multiplier': round(multiplier, 2),
             'potential_win': potential_win,
-            'diamonds_found': diamonds
+            'diamonds_found': diamonds,
+            'active': True  # La partie continue
         })
 
 @app.route('/api/minebomb/cashout', methods=['POST'])
