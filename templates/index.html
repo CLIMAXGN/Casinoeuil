@@ -315,41 +315,73 @@
         </div>
     </div>
 
-    <!-- BlackJack -->
-    <div id="blackjack" class="game-screen">
-        <button class="back-btn" onclick="backToMenu()">← Back</button>
-        <h2 style="text-align: center; font-size: 32px; margin-bottom: 20px;">BlackJack</h2>
-        <div class="game-info" id="deckInfo" style="text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px;">
-            Le nombre de paquets sera révélé au début de la partie.
-        </div>
-        
-        <div id="bjBetting">
-            <div class="input-group" style="text-align: center;">
-                <label>Mise:</label>
-                <input type="number" id="bjBet" min="10" max="1000" value="50">
-                <br><br>
-                <button class="btn" onclick="startBlackjack()">Jouer</button>
-            </div>
-        </div>
-
-        <div id="bjGame" style="display: none;">
-            <div class="blackjack-table">
-                <div class="hand">
-                    <div class="hand-title">Dealer - <span id="dealerTotal">?</span></div>
-                    <div class="cards" id="dealerCards"></div>
-                </div>
-                <div class="hand">
-                    <div class="hand-title">Toi - <span id="playerTotal">0</span></div>
-                    <div class="cards" id="playerCards"></div>
-                </div>
-            </div>
-            <div style="text-align: center;">
-                <button class="btn" id="hitBtn" onclick="hit()">Hit</button>
-                <button class="btn" id="standBtn" onclick="stand()">Stand</button>
-            </div>
-            <div id="bjMessage"></div>
+<!-- BlackJack -->
+<div id="blackjack" class="game-screen">
+    <button class="back-btn" onclick="backToMenu()">← Back</button>
+    <h2 style="text-align: center; font-size: 32px; margin-bottom: 20px;">BlackJack</h2>
+    <div class="game-info" id="deckInfo" style="text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 20px;">
+        Le nombre de paquets sera révélé au début de la partie.
+    </div>
+    
+    <div id="bjBetting">
+        <div class="input-group" style="text-align: center;">
+            <label>Mise:</label>
+            <input type="number" id="bjBet" min="10" max="1000" value="50">
+            <br><br>
+            <button class="btn" onclick="startBlackjack()">🎰 Jouer</button>
         </div>
     </div>
+
+    <div id="bjGame" style="display: none;">
+        <div class="blackjack-table">
+            <div class="hand">
+                <div class="hand-title">Dealer - <span id="dealerTotal">?</span></div>
+                <div class="cards" id="dealerCards"></div>
+            </div>
+            <div class="hand">
+                <div class="hand-title">Toi - <span id="playerTotal">0</span></div>
+                <div class="cards" id="playerCards"></div>
+            </div>
+        </div>
+        
+        <!-- Boutons de jeu -->
+        <div style="text-align: center; margin-top: 24px;">
+            <button class="btn" id="hitBtn" onclick="hit()" style="margin: 0 8px; background: #3b82f6;">
+                🃏 Hit
+            </button>
+            <button class="btn" id="standBtn" onclick="stand()" style="margin: 0 8px; background: #ef4444;">
+                ✋ Stand
+            </button>
+            <button class="btn" id="doubleBtn" onclick="doubleDown()" style="margin: 0 8px; background: #f59e0b; display: none;">
+                💰 Double
+            </button>
+        </div>
+        
+        <!-- Message de résultat -->
+        <div id="bjMessage" style="margin-top: 24px;"></div>
+        
+        <!-- Info sur les règles -->
+        <div style="text-align: center; margin-top: 32px; padding: 20px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <div style="font-size: 18px; font-weight: bold; color: #3b82f6; margin-bottom: 12px;">
+                📜 Règles du Blackjack
+            </div>
+            <div style="font-size: 14px; color: #cbd5e1; line-height: 1.8;">
+                <div style="margin-bottom: 8px;">
+                    <strong style="color: #22c55e;">🎰 Blackjack</strong> (21 en 2 cartes) = <strong>×1.5</strong> de gain
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong style="color: #3b82f6;">✋ Le croupier</strong> s'arrête à <strong>17 ou plus</strong>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <strong style="color: #f59e0b;">💰 Double Down</strong> = Doubler la mise, recevoir 1 carte et stand automatique
+                </div>
+                <div>
+                    <strong style="color: #94a3b8;">🟰 Push</strong> = Égalité, votre mise est rendue
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Roulette -->
     <div id="roulette" class="game-screen">

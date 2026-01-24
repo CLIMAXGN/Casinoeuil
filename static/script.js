@@ -406,6 +406,39 @@ function startPassiveIncome() {
 // ============================================
 // BLACKJACK
 // ============================================
+function displayHand(player, cards, total, hideSecond = false) {
+    const cardsDiv = document.getElementById(player + 'Cards');
+    const totalSpan = document.getElementById(player + 'Total');
+    
+    // Vérification de sécurité
+    if (!cardsDiv || !totalSpan) {
+        console.error(`Éléments HTML manquants pour ${player}`);
+        return;
+    }
+    
+    if (!cards || !Array.isArray(cards)) {
+        console.error('Cards invalide:', cards);
+        return;
+    }
+    
+    cardsDiv.innerHTML = '';
+    
+    cards.forEach((card, index) => {
+        const cardDiv = document.createElement('div');
+        if (hideSecond && index === 1) {
+            cardDiv.className = 'card card-back';
+            cardDiv.textContent = '🂠';
+        } else {
+            const isRed = card.suit === '♥' || card.suit === '♦';
+            cardDiv.className = 'card' + (isRed ? ' red' : '');
+            cardDiv.innerHTML = card.value + '<br>' + card.suit;
+        }
+        cardsDiv.appendChild(cardDiv);
+    });
+    
+    totalSpan.textContent = total;
+}
+
 async function startBlackjack() {
     const bet = parseInt(document.getElementById('bjBet').value);
     
@@ -425,21 +458,68 @@ async function startBlackjack() {
         const data = await response.json();
         updateMoneyDisplay(data.money);
         
+        // Gérer Blackjack naturel
+        if (data.natural_result) {
+            document.getElementById('bjBetting').style.display = 'none';
+            document.getElementById('bjGame').style.display = 'block';
+            
+            displayHand('player', data.player_hand, data.player_total);
+            displayHand('dealer', data.dealer_hand, data.dealer_total, false);
+            
+            const msgDiv = document.getElementById('bjMessage');
+            msgDiv.className = 'message';
+            
+            if (data.natural_result === 'blackjack') {
+                msgDiv.classList.add('win');
+            } else if (data.natural_result === 'push') {
+                msgDiv.classList.add('info');
+            } else {
+                msgDiv.classList.add('lose');
+            }
+            
+            msgDiv.innerHTML = data.result_message;
+            
+            updateStatsDisplay(data.stats);
+            
+            // Désactiver les boutons
+            document.getElementById('hitBtn').disabled = true;
+            document.getElementById('standBtn').disabled = true;
+            document.getElementById('doubleBtn').style.display = 'none';
+            
+            setTimeout(() => {
+                document.getElementById('bjGame').style.display = 'none';
+                document.getElementById('bjBetting').style.display = 'block';
+                msgDiv.innerHTML = '';
+            }, 3000);
+            
+            return;
+        }
+        
+        // Partie normale
         document.getElementById('bjBetting').style.display = 'none';
         document.getElementById('bjGame').style.display = 'block';
         document.getElementById('bjMessage').innerHTML = '';
         
         // Update deck info
-        const totalCards = data.num_decks * 52;
         document.getElementById('deckInfo').innerHTML = `
-            Cette partie utilise <strong>${data.num_decks} paquet${data.num_decks > 1 ? 's' : ''} de cartes</strong> (${totalCards} cartes)
+            Cette partie utilise <strong>${data.num_decks} paquet${data.num_decks > 1 ? 's' : ''} de cartes</strong>
         `;
         
         displayHand('player', data.player_hand, data.player_total);
+        // Afficher seulement la première carte du croupier
         displayHand('dealer', data.dealer_hand.slice(0, 1), '?', true);
         
         document.getElementById('hitBtn').disabled = false;
         document.getElementById('standBtn').disabled = false;
+        
+        // Afficher le bouton Double si assez d'argent
+        const doubleBtn = document.getElementById('doubleBtn');
+        if (data.money >= bet) {
+            doubleBtn.style.display = 'inline-block';
+            doubleBtn.disabled = false;
+        } else {
+            doubleBtn.style.display = 'none';
+        }
         
     } catch (error) {
         console.error('Blackjack error:', error);
@@ -456,6 +536,9 @@ async function hit() {
         
         const data = await response.json();
         displayHand('player', data.player_hand, data.player_total);
+        
+        // Cacher le bouton Double après avoir tiré
+        document.getElementById('doubleBtn').style.display = 'none';
         
         if (data.busted) {
             document.getElementById('hitBtn').disabled = true;
@@ -498,6 +581,7 @@ async function stand() {
         
         document.getElementById('hitBtn').disabled = true;
         document.getElementById('standBtn').disabled = true;
+        document.getElementById('doubleBtn').style.display = 'none';
         
         setTimeout(() => {
             document.getElementById('bjGame').style.display = 'none';
@@ -509,26 +593,77 @@ async function stand() {
     }
 }
 
-function displayHand(player, cards, total, hideSecond = false) {
-    const cardsDiv = document.getElementById(player + 'Cards');
-    const totalSpan = document.getElementById(player + 'Total');
+async function doubleDown() {
+    const btn = document.getElementById('doubleBtn');
+    btn.disabled = true;
     
-    cardsDiv.innerHTML = '';
-    
-    cards.forEach((card, index) => {
-        const cardDiv = document.createElement('div');
-        if (hideSecond && index === 1) {
-            cardDiv.className = 'card card-back';
-            cardDiv.textContent = '🂠';
-        } else {
-            const isRed = card.suit === '♥' || card.suit === '♦';
-            cardDiv.className = 'card' + (isRed ? ' red' : '');
-            cardDiv.innerHTML = card.value + '<br>' + card.suit;
+    try {
+        const response = await fetch('/api/blackjack/double', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        
+        // Vérifier si erreur
+        if (!response.ok) {
+            const error = await response.json();
+            alert('❌ ' + (error.error || 'Erreur inconnue'));
+            btn.disabled = false;
+            return;
         }
-        cardsDiv.appendChild(cardDiv);
-    });
-    
-    totalSpan.textContent = total;
+        
+        const data = await response.json();
+        
+        // Vérifier que les données existent
+        if (!data.player_hand || !data.dealer_hand) {
+            console.error('Données manquantes:', data);
+            alert('Erreur: données manquantes');
+            btn.disabled = false;
+            return;
+        }
+        
+        // Afficher les mains
+        displayHand('player', data.player_hand, data.player_total);
+        displayHand('dealer', data.dealer_hand, data.dealer_total, false);
+        
+        // Mettre à jour l'argent
+        updateMoneyDisplay(data.money);
+        
+        // Afficher le résultat
+        const msgDiv = document.getElementById('bjMessage');
+        msgDiv.className = 'message';
+        
+        if (data.result === 'win') {
+            msgDiv.classList.add('win');
+        } else if (data.result === 'draw') {
+            msgDiv.classList.add('info');
+        } else {
+            msgDiv.classList.add('lose');
+        }
+        
+        msgDiv.innerHTML = data.result_message;
+        
+        // Désactiver les boutons
+        document.getElementById('hitBtn').disabled = true;
+        document.getElementById('standBtn').disabled = true;
+        document.getElementById('doubleBtn').style.display = 'none';
+        
+        // Mettre à jour les stats
+        if (data.stats) {
+            updateStatsDisplay(data.stats);
+        }
+        
+        // Retour au menu après 3 secondes
+        setTimeout(() => {
+            document.getElementById('bjGame').style.display = 'none';
+            document.getElementById('bjBetting').style.display = 'block';
+            msgDiv.innerHTML = '';
+        }, 3000);
+        
+    } catch (error) {
+        console.error('Double Down error:', error);
+        alert('❌ Erreur de connexion');
+        btn.disabled = false;
+    }
 }
 
 // ============================================

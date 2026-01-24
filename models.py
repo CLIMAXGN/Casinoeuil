@@ -366,7 +366,7 @@ class GameAction:
     """Classe représentant une action de jeu"""
     def __init__(self, action_type, card=None, total=0, details=None):
         assert isinstance(action_type, str), "Le type d'action doit être une chaîne"
-        assert action_type in ['hit', 'stand', 'start', 'bet', 'deal_player', 'deal_dealer', 'dealer_hit', 'end'], \
+        assert action_type in ['hit', 'stand', 'double', 'start', 'bet', 'deal_player', 'deal_dealer', 'dealer_hit', 'end'], \
             "Type d'action invalide"
         assert isinstance(total, (int, float)), "Le total doit être un nombre"
         assert total >= 0, "Le total ne peut pas être négatif"

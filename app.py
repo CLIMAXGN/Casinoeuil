@@ -802,12 +802,11 @@ def blackjack_start():
     # Retirer l'argent
     current_user.remove_money(bet)
     
-    # AMÉLIORATION : Gestion persistante du deck
+    # Gestion persistante du deck
     blackjack_session = session.get('blackjack_session', {})
     
-    # Si pas de session active OU moins de 20% du deck restant, créer nouveau deck
     if not blackjack_session or len(blackjack_session.get('deck', [])) < (blackjack_session.get('total_cards', 0) * 0.2):
-        num_decks = 6  # Standard casino (peut être 4, 6 ou 8)
+        num_decks = 6
         deck = create_deck() * num_decks
         random.shuffle(deck)
         
@@ -818,43 +817,118 @@ def blackjack_start():
             'cards_dealt': 0
         }
     else:
-        # Utiliser le deck existant
         deck = blackjack_session['deck']
         num_decks = blackjack_session['num_decks']
     
-    # Distribuer 2 cartes au joueur et au croupier
+    # Distribuer 2 cartes au joueur ET 2 au croupier
     player_hand = [deck.pop(), deck.pop()]
     dealer_hand = [deck.pop(), deck.pop()]
     
-    # Mettre à jour le nombre de cartes distribuées
     blackjack_session['cards_dealt'] += 4
     blackjack_session['deck'] = deck
     
-    # Calculer les totaux
     player_total = hand_total(player_hand)
     dealer_total = hand_total(dealer_hand)
     
-    # Stocker la partie en cours
+    # Vérifier Blackjack naturel
+    player_blackjack = len(player_hand) == 2 and player_total == 21
+    dealer_blackjack = len(dealer_hand) == 2 and dealer_total == 21
+    
+    # Si le joueur a un Blackjack naturel
+    if player_blackjack:
+        if dealer_blackjack:
+            # Les deux ont Blackjack → push (égalité)
+            result = 'push'
+            profit = 0
+            current_user.add_money(bet)
+            result_message = '🟰 PUSH ! Vous et le croupier avez Blackjack.'
+        else:
+            # Seulement le joueur a Blackjack → gagne ×1.5
+            result = 'blackjack'
+            winnings = int(bet * 2.5)  # 1.5× le gain + mise rendue = 2.5
+            profit = int(bet * 1.5)
+            current_user.add_money(winnings)
+            result_message = f'🎉 BLACKJACK ! Vous gagnez {profit}$ (×1.5)'
+        
+        # Enregistrer immédiatement
+        history = GameHistory(
+            user_id=current_user.id,
+            game_type='blackjack',
+            bet_amount=bet,
+            result=result,
+            profit=profit,
+            multiplier=1.5 if result == 'blackjack' else 0,
+            details={'player_total': player_total, 'dealer_total': dealer_total, 'natural': True}
+        )
+        db.session.add(history)
+        db.session.commit()
+        
+        session.pop('blackjack', None)
+        session['blackjack_session'] = blackjack_session
+        
+        new_achievements = check_and_unlock_achievements(current_user)
+        
+        return jsonify({
+            'natural_result': result,
+            'result_message': result_message,
+            'profit': profit,
+            'money': current_user.money,
+            'player_hand': player_hand,
+            'dealer_hand': dealer_hand,
+            'player_total': player_total,
+            'dealer_total': dealer_total,
+            'num_decks': num_decks,
+            'stats': get_global_stats(),
+            'new_achievements': new_achievements
+        })
+    
+    # Si le croupier a Blackjack naturel (mais pas le joueur)
+    if dealer_blackjack:
+        result = 'lose'
+        profit = -bet
+        
+        history = GameHistory(
+            user_id=current_user.id,
+            game_type='blackjack',
+            bet_amount=bet,
+            result=result,
+            profit=profit,
+            multiplier=0,
+            details={'player_total': player_total, 'dealer_total': dealer_total, 'dealer_natural': True}
+        )
+        db.session.add(history)
+        db.session.commit()
+        
+        session.pop('blackjack', None)
+        session['blackjack_session'] = blackjack_session
+        
+        new_achievements = check_and_unlock_achievements(current_user)
+        
+        return jsonify({
+            'natural_result': result,
+            'result_message': '😢 Le croupier a Blackjack ! Vous perdez.',
+            'profit': profit,
+            'money': current_user.money,
+            'player_hand': player_hand,
+            'dealer_hand': dealer_hand,
+            'player_total': player_total,
+            'dealer_total': dealer_total,
+            'num_decks': num_decks,
+            'stats': get_global_stats(),
+            'new_achievements': new_achievements
+        })
+    
+    # Partie normale (pas de Blackjack)
     session['blackjack'] = {
         'bet': bet,
         'player_hand': player_hand,
         'dealer_hand': dealer_hand
     }
     
-    # Stocker la session de deck
     session['blackjack_session'] = blackjack_session
     
-    # Calculer combien de cartes restent
-    cards_remaining = len(deck)
-    deck_percentage = (cards_remaining / blackjack_session['total_cards']) * 100
-    
-    # ENREGISTRER DANS LA PILE (POO)
     game_manager.start_game(current_user.id, 'blackjack', bet)
-    game_manager.record_action('start', details={
-        'bet': bet, 
-        'num_decks': num_decks,
-        'cards_remaining': cards_remaining
-    })
+    game_manager.record_action('start', details={'bet': bet, 'num_decks': num_decks})
     game_manager.record_action('deal_player', card=player_hand[0], total=card_value(player_hand[0]))
     game_manager.record_action('deal_player', card=player_hand[1], total=player_total)
     game_manager.record_action('deal_dealer', card=dealer_hand[0], total=card_value(dealer_hand[0]))
@@ -865,13 +939,9 @@ def blackjack_start():
         'dealer_hand': dealer_hand,
         'player_total': player_total,
         'dealer_total': dealer_total,
-        'num_decks': num_decks,
-        'cards_remaining': cards_remaining,
-        'deck_percentage': round(deck_percentage, 1)
+        'num_decks': num_decks
     })
 
-
-# Modifie aussi hit() et stand() pour utiliser le deck de session :
 
 @app.route('/api/blackjack/hit', methods=['POST'])
 @login_required
@@ -919,19 +989,18 @@ def blackjack_stand():
     blackjack_session = session.get('blackjack_session', {})
     deck = blackjack_session.get('deck', [])
     
-    #ENREGISTRER L'ACTION STAND
+    # ENREGISTRER L'ACTION STAND
     player_total = hand_total(game['player_hand'])
     game_manager.record_action('stand', total=player_total)
     
-    #Dealer tire jusqu'à 17
+    # Dealer tire jusqu'à 17
     while hand_total(game['dealer_hand']) < 17:
         card = deck.pop()
         game['dealer_hand'].append(card)
         blackjack_session['cards_dealt'] += 1
-        # ENREGISTRER CHAQUE CARTE DU DEALER
         game_manager.record_action('dealer_hit', card=card, total=hand_total(game['dealer_hand']))
     
-    #Mettre à jour le deck
+    # Mettre à jour le deck
     blackjack_session['deck'] = deck
     session['blackjack_session'] = blackjack_session
     
@@ -939,7 +1008,7 @@ def blackjack_stand():
     dealer_total = hand_total(game['dealer_hand'])
     bet = game['bet']
     
-    #Déterminer le résultat
+    # Déterminer le résultat
     if player_total > 21:
         result = 'lose'
         profit = -bet
@@ -957,13 +1026,13 @@ def blackjack_stand():
         profit = 0
         result_message = 'Égalité !'
     
-    #Mettre à jour l'argent
+    # Mettre à jour l'argent
     if result == 'win':
         current_user.add_money(bet * 2)
     elif result == 'draw':
         current_user.add_money(bet)
     
-    #Sauvegarder l'historique
+    # Sauvegarder l'historique
     history = GameHistory(
         user_id=current_user.id,
         game_type='blackjack',
@@ -987,7 +1056,7 @@ def blackjack_stand():
     # Info sur le deck pour affichage
     cards_remaining = len(deck)
     deck_percentage = (cards_remaining / blackjack_session['total_cards']) * 100
-    will_shuffle = deck_percentage < 20  # Si moins de 20%, on mélangera au prochain coup
+    will_shuffle = deck_percentage < 20
     
     return jsonify({
         'result': result,
@@ -1002,6 +1071,157 @@ def blackjack_stand():
         'cards_remaining': cards_remaining,
         'deck_percentage': round(deck_percentage, 1),
         'will_shuffle': will_shuffle
+    })
+
+
+@app.route('/api/blackjack/double', methods=['POST'])
+@login_required
+def blackjack_double():
+    """Double la mise et tire 1 carte"""
+    
+    # 🔍 DEBUG 1
+    print("=" * 50)
+    print("🎰 DOUBLE APPELÉ")
+    print(f"User: {current_user.username}")
+    print(f"Money: {current_user.money}")
+    print("=" * 50)
+    
+    game = session.get('blackjack')
+    
+    # 🔍 DEBUG 2
+    if not game:
+        print("❌ ERREUR: Pas de partie en cours dans la session")
+        print(f"Session keys: {list(session.keys())}")
+        return jsonify({'error': 'Pas de partie en cours'}), 400
+    
+    print(f"✅ Game trouvé: bet={game.get('bet')}, player_hand={len(game.get('player_hand', []))} cartes")
+    
+    blackjack_session = session.get('blackjack_session', {})
+    deck = blackjack_session.get('deck', [])
+    
+    bet = game['bet']
+    
+    # 🔍 DEBUG 3 - VÉRIFICATIONS
+    print(f"Vérifications:")
+    print(f"  - Cartes joueur: {len(game['player_hand'])}")
+    print(f"  - Argent actuel: {current_user.money}")
+    print(f"  - Bet à doubler: {bet}")
+    print(f"  - Cartes restantes: {len(deck)}")
+    
+    # VÉRIFICATIONS
+    try:
+        assert len(game['player_hand']) == 2, "Vous pouvez doubler seulement après les 2 premières cartes"
+        print("  ✅ 2 cartes OK")
+    except AssertionError as e:
+        print(f"  ❌ ERREUR 2 cartes: {e}")
+        return jsonify({'error': str(e)}), 400
+    
+    try:
+        assert current_user.money >= bet, "Fonds insuffisants pour doubler"
+        print("  ✅ Fonds OK")
+    except AssertionError as e:
+        print(f"  ❌ ERREUR Fonds: {e}")
+        return jsonify({'error': str(e)}), 400
+    
+    try:
+        assert len(deck) > 0, "Plus de cartes dans le deck"
+        print("  ✅ Deck OK")
+    except AssertionError as e:
+        print(f"  ❌ ERREUR Deck: {e}")
+        return jsonify({'error': str(e)}), 400
+    
+    print("✅ TOUTES LES VÉRIFICATIONS PASSÉES")
+    
+    # ⚠️ FIX : Retirer l'argent directement SANS commit
+    current_user.money -= bet
+    game['bet'] = bet * 2
+    
+    # Tirer UNE SEULE carte
+    card = deck.pop()
+    game['player_hand'].append(card)
+    blackjack_session['cards_dealt'] += 1
+    
+    player_total = hand_total(game['player_hand'])
+    
+    # Sauvegarder
+    blackjack_session['deck'] = deck
+    session['blackjack'] = game
+    session['blackjack_session'] = blackjack_session
+    
+    # ENREGISTRER DANS LA PILE
+    game_manager.record_action('double', card=card, total=player_total)
+    
+    # Le croupier joue
+    while hand_total(game['dealer_hand']) < 17:
+        dealer_card = deck.pop()
+        game['dealer_hand'].append(dealer_card)
+        blackjack_session['cards_dealt'] += 1
+        game_manager.record_action('dealer_hit', card=dealer_card, total=hand_total(game['dealer_hand']))
+    
+    blackjack_session['deck'] = deck
+    session['blackjack_session'] = blackjack_session
+    
+    # Déterminer le résultat
+    dealer_total = hand_total(game['dealer_hand'])
+    
+    if player_total > 21:
+        result = 'lose'
+        profit = -game['bet']
+        result_message = '💥 Vous avez perdu ! (Bust avec double)'
+    elif dealer_total > 21 or player_total > dealer_total:
+        result = 'win'
+        profit = game['bet']
+        current_user.money += game['bet'] * 2
+        result_message = f'🎉 Vous avez gagné {profit}$ (Double Down réussi !)'
+    elif player_total < dealer_total:
+        result = 'lose'
+        profit = -game['bet']
+        result_message = f'😢 Vous avez perdu {abs(profit)}$'
+    else:
+        result = 'draw'
+        profit = 0
+        current_user.money += game['bet']
+        result_message = '🟰 Égalité ! Mise rendue'
+    
+    # Sauvegarder l'historique
+    history = GameHistory(
+        user_id=current_user.id,
+        game_type='blackjack',
+        bet_amount=game['bet'],
+        result=result,
+        profit=profit,
+        multiplier=1.0 if result == 'win' else 0,
+        details={
+            'player_total': player_total, 
+            'dealer_total': dealer_total,
+            'doubled': True
+        }
+    )
+    db.session.add(history)
+    db.session.commit()
+    
+    # TERMINER LA PARTIE
+    game_manager.end_game(current_user.id)
+    
+    # Nettoyer
+    session.pop('blackjack', None)
+    
+    new_achievements = check_and_unlock_achievements(current_user)
+    
+    print(f"✅ Double terminé: {result}, profit={profit}")
+    print("=" * 50)
+    
+    return jsonify({
+        'result': result,
+        'result_message': result_message,
+        'profit': profit,
+        'money': current_user.money,
+        'player_hand': game['player_hand'],
+        'dealer_hand': game['dealer_hand'],
+        'player_total': player_total,
+        'dealer_total': dealer_total,
+        'stats': get_global_stats(),
+        'new_achievements': new_achievements
     })
 
 # ============================================
