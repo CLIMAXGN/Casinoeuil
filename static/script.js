@@ -850,7 +850,9 @@ async function revealCell(index) {
         if (!response.ok) {
             // Erreur - réactiver si c'était une erreur de validation
             mbGameActive = originalActive;
-            showMessage(data.error || 'Erreur', 'error');
+            const msgDiv = document.getElementById('mbMessage');
+            msgDiv.className = 'message lose';
+            msgDiv.innerHTML = data.error || 'Erreur';
             return;
         }
         
@@ -859,11 +861,11 @@ async function revealCell(index) {
         
         if (data.type === 'bomb') {
             // 💣 BOMBE - Le jeu reste désactivé
+            mbGameActive = false; // S'assurer que c'est désactivé
             cell.innerHTML = '💣';
             cell.classList.add('revealed', 'bomb');
             
             setTimeout(() => {
-                mbGameActive = false; // S'assurer que c'est désactivé
                 document.getElementById('cashoutBtn').disabled = true; // Désactiver le bouton
                 
                 // Afficher toute la grille
@@ -875,11 +877,16 @@ async function revealCell(index) {
                     }
                 });
                 
-                updateStats(data.stats);
-                showMessage('💥 BOOM ! Vous avez perdu !', 'error');
+                updateStatsDisplay(data.stats);
+                
+                const msgDiv = document.getElementById('mbMessage');
+                msgDiv.className = 'message lose';
+                msgDiv.innerHTML = '💥 BOOM ! Vous avez perdu !';
                 
                 setTimeout(() => {
-                    backToMenu();
+                    document.getElementById('mbGame').style.display = 'none';
+                    document.getElementById('mbBetting').style.display = 'block';
+                    msgDiv.innerHTML = '';
                 }, 2000);
             }, 500);
         } else {
@@ -894,13 +901,18 @@ async function revealCell(index) {
             
             document.getElementById('cashoutBtn').disabled = false;
             
-            showMessage(`💎 +1 Diamant ! Multiplicateur: x${data.multiplier}`, 'success');
+            const msgDiv = document.getElementById('mbMessage');
+            msgDiv.className = 'message win';
+            msgDiv.innerHTML = `💎 +1 Diamant ! Multiplicateur: x${data.multiplier}`;
+            setTimeout(() => msgDiv.innerHTML = '', 2000);
         }
         
     } catch (error) {
         // En cas d'erreur réseau, réactiver
         mbGameActive = originalActive;
-        showMessage('Erreur de connexion', 'error');
+        const msgDiv = document.getElementById('mbMessage');
+        msgDiv.className = 'message lose';
+        msgDiv.innerHTML = 'Erreur de connexion';
     }
 }
 
