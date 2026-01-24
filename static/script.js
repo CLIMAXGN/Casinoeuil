@@ -918,19 +918,33 @@ async function cashout() {
             updateStatsDisplay(data.stats);
         }
         
+        // 💣 RÉVÉLER LES BOMBES RESTANTES
+        if (data.grid) {
+            document.querySelectorAll('.mine-cell').forEach((cell, index) => {
+                cell.onclick = null;
+                
+                // Si c'est une bombe non révélée, l'afficher progressivement
+                if (data.grid[index] === 'bomb' && !cell.classList.contains('revealed')) {
+                    setTimeout(() => {
+                        cell.classList.add('revealed', 'bomb');
+                        cell.innerHTML = '💣';
+                        cell.style.opacity = '0.6'; // Plus transparent pour différencier
+                    }, Math.random() * 1000);
+                }
+            });
+        }
+        
         const msgDiv = document.getElementById('mbMessage');
         msgDiv.className = 'message win';
         msgDiv.innerHTML = `💰 CASHOUT!<br>Vous gagnez ${data.profit} $ (x${data.multiplier})`;
+
         
-        document.querySelectorAll('.mine-cell').forEach(cell => {
-            cell.onclick = null;
-        });
         document.getElementById('cashoutBtn').disabled = true;
         
         setTimeout(() => {
             document.getElementById('mbGame').style.display = 'none';
             document.getElementById('mbBetting').style.display = 'block';
-        }, 3000);
+        }, 4000); // Augmenté à 4s pour laisser le temps de voir les bombes
         
     } catch (error) {
         console.error('Cashout error:', error);

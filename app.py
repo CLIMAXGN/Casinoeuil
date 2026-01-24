@@ -1496,6 +1496,8 @@ def minebomb_cashout():
     
     print(f"✅ Historique sauvegardé. Nouvel argent: {current_user.money}")
     
+    grid = game.get('grid', [])
+    
     # NETTOYER LA SESSION
     session.pop('minebomb', None)
     
@@ -1507,6 +1509,7 @@ def minebomb_cashout():
         'profit': profit,
         'multiplier': round(multiplier, 2),
         'money': current_user.money,
+        'grid': grid,  # 💣 Envoyer la grille complète
         'stats': get_global_stats(),
         'new_achievements': new_achievements
     })
