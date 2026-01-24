@@ -14,6 +14,8 @@ let clickCost = 25;
 let autoCost = 150;
 let factoryCost = 800;
 let bankCost = 5000;
+let mbGameActive = false;
+let mbRevealed = [];
 
 // Gestion de la sidebar
 function showMenu() {
@@ -802,6 +804,9 @@ async function startMineBomb() {
         
         const data = await response.json();
         updateMoneyDisplay(data.money);
+
+        mbGameActive = true;
+        mbRevealed = [];
         
         document.getElementById('mbBetting').style.display = 'none';
         document.getElementById('mbGame').style.display = 'block';
@@ -917,6 +922,9 @@ async function revealCell(index) {
 }
 
 async function cashout() {
+    // Désactiver immédiatement le jeu localement
+    mbGameActive = false;
+    
     try {
         const response = await fetch('/api/minebomb/cashout', {
             method: 'POST',
@@ -934,6 +942,9 @@ async function cashout() {
             if (errorMsg.includes('session') || errorMsg.includes('partie')) {
                 setTimeout(() => location.reload(), 1500);
             }
+            
+            // Réactiver le jeu si erreur
+            mbGameActive = true;
             return;
         }
         
@@ -946,17 +957,16 @@ async function cashout() {
             updateStatsDisplay(data.stats);
         }
         
-        // 💣 RÉVÉLER LES BOMBES RESTANTES
         if (data.grid) {
             document.querySelectorAll('.mine-cell').forEach((cell, index) => {
                 cell.onclick = null;
                 
                 // Si c'est une bombe non révélée, l'afficher progressivement
-                if (data.grid[index] === 'bomb' && !cell.classList.contains('revealed')) {
+                if (data.grid[index] === 'bomb' && !mbRevealed.includes(index)) {
                     setTimeout(() => {
                         cell.classList.add('revealed', 'bomb');
                         cell.innerHTML = '💣';
-                        cell.style.opacity = '0.6'; // Plus transparent pour différencier
+                        cell.style.opacity = '0.6';
                     }, Math.random() * 1000);
                 }
             });
@@ -965,18 +975,23 @@ async function cashout() {
         const msgDiv = document.getElementById('mbMessage');
         msgDiv.className = 'message win';
         msgDiv.innerHTML = `💰 CASHOUT!<br>Vous gagnez ${data.profit} $ (x${data.multiplier})`;
-
         
         document.getElementById('cashoutBtn').disabled = true;
         
         setTimeout(() => {
             document.getElementById('mbGame').style.display = 'none';
             document.getElementById('mbBetting').style.display = 'block';
-        }, 4000); // Augmenté à 4s pour laisser le temps de voir les bombes
+            msgDiv.innerHTML = '';
+            // Réinitialiser les variables
+            mbGameActive = false;
+            mbRevealed = [];
+        }, 4000);
         
     } catch (error) {
         console.error('Cashout error:', error);
         alert('❌ Erreur de connexion. Vérifie ta connexion internet.');
+        // Réactiver le jeu en cas d'erreur réseau
+        mbGameActive = true;
     }
 }
 
