@@ -465,7 +465,7 @@
         }
 
         function openCreateModal() {
-            const userMoney = parseInt(document.querySelector('.money-display').textContent.replace(/[^0-9]/g, ''));
+        const userMoney = parseInt(document.querySelector('.sidebar-money-value').textContent.replace(/[^0-9]/g, ''));
             if (userMoney < 100000000) {
                 showNotification('Vous n\'avez pas assez d\'argent ! (100M requis)', 'error');
                 return;

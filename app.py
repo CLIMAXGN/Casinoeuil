@@ -63,7 +63,7 @@ from models import db, User, ClickerData, GameHistory, Achievement, GameManager
 
 # Instance globale du gestionnaire (POO + PILE)
 game_manager = GameManager()
-clan_pricing = ClanPricingSystem()
+
 
 # Initialisation
 db.init_app(app)
@@ -104,7 +104,6 @@ class ClanPricingSystem:
         return remaining
 
 
-# Instance globale
 clan_pricing = ClanPricingSystem()
 
 # ============================================
