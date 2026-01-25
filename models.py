@@ -305,6 +305,7 @@ class ClickerData(db.Model):
     
     total_clicks = db.Column(db.Integer, default=0)
     total_earned = db.Column(db.Integer, default=0)
+    last_passive_claim = db.Column(db.DateTime, default=datetime.utcnow)
     
     @property
     def passive_income(self):

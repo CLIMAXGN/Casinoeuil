@@ -742,13 +742,23 @@ def clicker_upgrade():
 @app.route('/api/clicker/passive', methods=['POST'])
 @login_required
 def clicker_passive():
-    """Revenu passif"""
+    """Revenu passif - PROTECTION ANTI MULTI-ONGLETS"""
     clicker = current_user.clicker_data
+    
+    now = datetime.utcnow()
+    
+    # Vérifier si au moins 0.95 seconde s'est écoulée depuis le dernier claim
+    if clicker.last_passive_claim:
+        elapsed = (now - clicker.last_passive_claim).total_seconds()
+        if elapsed < 0.95:  # Marge de sécurité pour éviter les doublons
+            return jsonify({'money': current_user.money})
+    
     passive = clicker.passive_income
     
     if passive > 0:
         current_user.add_money(passive)
         clicker.total_earned += passive
+        clicker.last_passive_claim = now
         db.session.commit()
     
     return jsonify({'money': current_user.money})
