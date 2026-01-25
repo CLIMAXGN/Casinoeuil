@@ -63,6 +63,7 @@ from models import db, User, ClickerData, GameHistory, Achievement, GameManager
 
 # Instance globale du gestionnaire (POO + PILE)
 game_manager = GameManager()
+clan_pricing = ClanPricingSystem()
 
 # Initialisation
 db.init_app(app)
@@ -73,6 +74,38 @@ login_manager.login_view = 'login'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+# ============================================
+# SYSTÈME SIMPLE: 2 CLANS À 100K, PUIS 100M
+# ============================================
+
+class ClanPricingSystem:
+    """Prix réduit pour les 2 premiers clans seulement"""
+    
+    def __init__(self):
+        self.discounted_price = 100_000
+        self.normal_price = 100_000_000
+        self.max_discounted_clans = 2
+    
+    def get_current_price(self):
+        """Retourne 100k pour les 2 premiers clans, 100M après"""
+        # Compter combien de clans existent
+        total_clans = Clan.query.count()
+        
+        if total_clans < self.max_discounted_clans:
+            return self.discounted_price
+        else:
+            return self.normal_price
+    
+    def get_remaining_slots(self):
+        """Combien de slots à 100k restent"""
+        total_clans = Clan.query.count()
+        remaining = max(0, self.max_discounted_clans - total_clans)
+        return remaining
+
+
+# Instance globale
+clan_pricing = ClanPricingSystem()
 
 # ============================================
 # GESTIONNAIRE D'ERREURS GLOBAL
@@ -1860,7 +1893,7 @@ def get_clans():
 @app.route('/api/clans/create', methods=['POST'])
 @login_required
 def create_clan():
-    """Créer un clan (coûte 100M)"""
+    """Créer un clan - 100k pour les 2 premiers, 100M après"""
     data = request.json
     name = data.get('name')
     tag = data.get('tag')
@@ -1870,13 +1903,18 @@ def create_clan():
     assert name and tag, "Nom et tag requis"
     assert len(name) >= 3 and len(name) <= 50, "Le nom doit faire entre 3 et 50 caractères"
     assert len(tag) >= 2 and len(tag) <= 10, "Le tag doit faire entre 2 et 10 caractères"
-    assert current_user.money >= 100_000_000, "Il faut 100,000,000$ pour créer un clan"
     assert current_user.clan_id is None, "Vous êtes déjà dans un clan"
     assert not Clan.query.filter_by(name=name).first(), "Ce nom de clan existe déjà"
     assert not Clan.query.filter_by(tag=tag).first(), "Ce tag existe déjà"
     
+    # PRIX DYNAMIQUE
+    current_price = clan_pricing.get_current_price()
+    
+    # VÉRIFIER L'ARGENT
+    assert current_user.money >= current_price, f"Il faut {current_price:,}$ pour créer un clan"
+    
     # Créer le clan
-    current_user.remove_money(100_000_000)
+    current_user.remove_money(current_price)
     
     clan = Clan(
         name=name,
@@ -1891,10 +1929,30 @@ def create_clan():
     # Ajouter le créateur comme leader
     clan.add_member(current_user, role='leader')
     
+    remaining = clan_pricing.get_remaining_slots()
+    
     return jsonify({
         'success': True,
-        'message': f'Clan [{tag}] {name} créé !',
-        'clan_id': clan.id
+        'message': f'Clan [{tag}] {name} créé pour {current_price:,}$ !',
+        'clan_id': clan.id,
+        'price_paid': current_price,
+        'remaining_cheap_slots': remaining
+    })
+
+
+# NOUVELLE ROUTE: Voir le prix actuel
+@app.route('/api/clans/current_price')
+@login_required
+def get_clan_price():
+    """Retourne le prix actuel"""
+    price = clan_pricing.get_current_price()
+    remaining = clan_pricing.get_remaining_slots()
+    
+    return jsonify({
+        "price": price,
+        "formatted": f"{price:,} $",
+        "remaining_slots": remaining,
+        "is_discounted": remaining > 0
     })
 
 @app.route('/api/clans/<int:clan_id>')
