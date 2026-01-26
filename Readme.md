@@ -658,7 +658,9 @@ pip install flask
 
 <p align="center">
   <strong>Fait par TeamCipo & KAYOZZ</strong><br>
-  <strong>Trust us with your Entertainment!</strong>
+  <strong>Trust us with your Entertainment!</strong><br>
+  <br>
+  <img src="https://github.com/user-attachments/assets/157c47f8-dfc5-45f4-99f2-7f835b5b019f" width="3%" />
 </p>
 
 ---
