@@ -494,6 +494,13 @@
                 <div class="slot-reel" id="reel2">🍋</div>
                 <div class="slot-reel" id="reel3">🍊</div>
             </div>
+
+            <div class="input-group" style="text-align: center; margin-top: 24px;">
+                <label>Mise:</label>
+                <input type="number" id="slotsBet" min="10" max="1000" value="50">
+                <br><br>
+                <button class="btn" id="spinSlotsBtn" onclick="spinSlots()">🎰 TOURNE</button>
+            </div>
             
             <div class="slots-paytable">
                 <h3>Gains</h3>
@@ -504,13 +511,6 @@
                 <div class="paytable-row">🍊 🍊 🍊 = x12</div>
                 <div class="paytable-row">🍇 🍇 🍇 = x10</div>
                 <div class="paytable-row" style="border-top: 2px solid #3b82f6; margin-top: 8px; padding-top: 12px;">2 identiques = x2</div>
-            </div>
-
-            <div class="input-group" style="text-align: center; margin-top: 24px;">
-                <label>Mise:</label>
-                <input type="number" id="slotsBet" min="10" max="1000" value="50">
-                <br><br>
-                <button class="btn" id="spinSlotsBtn" onclick="spinSlots()">🎰 TOURNE</button>
             </div>
 
             <div id="slotsMessage"></div>
